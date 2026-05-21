@@ -9,11 +9,11 @@ import com.santiagocz.affiliates_service.dto.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.exceptions.AffiliateConflictException;
 import com.santiagocz.affiliates_service.exceptions.AffiliateNotFoundException;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -78,10 +78,12 @@ public class AffiliateService {
 
     // ──────────── READ ────────────
 
+    @Transactional(readOnly = true)
     public AffiliateResponseDto getById(Long id) {
         return mapper.toResponse(getEntityById(id));
     }
 
+    @Transactional(readOnly = true)
     public AffiliateResponseDto getByDni(String dni) {
         Affiliate a = affiliateRepository.findByDni(dni)
                 .orElseThrow(() -> new AffiliateNotFoundException(
@@ -89,23 +91,27 @@ public class AffiliateService {
         return mapper.toResponse(a);
     }
 
+    @Transactional(readOnly = true)
     public Page<AffiliateResponseDto> listAll(Pageable pageable) {
         return affiliateRepository.findAllByOrderByLastNameAsc(pageable)
                 .map(mapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public Page<AffiliateResponseDto> listPrimaries(Pageable pageable) {
         return affiliateRepository
                 .findByAffiliateTypeOrderByLastNameAsc(AffiliateType.PRIMARY, pageable)
                 .map(mapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public Page<AffiliateResponseDto> search(String term, Pageable pageable) {
         return affiliateRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(term, term, pageable)
                 .map(mapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public AffiliateResponseDto getPrimaryWithFamily(Long primaryId) {
         Affiliate primary = affiliateRepository.findPrimaryWithFamilyById(primaryId)
                 .orElseThrow(() -> new AffiliateNotFoundException(
@@ -113,6 +119,7 @@ public class AffiliateService {
         return mapper.toResponseWithFamily(primary);
     }
 
+    @Transactional(readOnly = true)
     public List<AffiliateResponseDto> getFamilyGroup(Long affiliateId) {
         Affiliate affiliate = getEntityById(affiliateId);
         Long primaryId = (affiliate.getAffiliateType() == AffiliateType.PRIMARY)
