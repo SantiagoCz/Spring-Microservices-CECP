@@ -2,6 +2,7 @@ package com.santiagocz.affiliates_service.controllers;
 
 import com.santiagocz.affiliates_service.dto.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.AffiliateResponseDto;
+import com.santiagocz.affiliates_service.dto.ApiResponse;
 import com.santiagocz.affiliates_service.services.AffiliateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -90,14 +91,16 @@ public class AffiliateController {
     // ──────────── STATUS ────────────
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deactivate(@PathVariable Long id) {
         affiliateService.deactivate(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Afiliado dado de baja correctamente."));
     }
 
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<Void> activate(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> activate(@PathVariable Long id) {
         affiliateService.activate(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Afiliado dado de alta correctamente."));
     }
 }
