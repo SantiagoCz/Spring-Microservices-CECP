@@ -1,5 +1,6 @@
 package com.santiagocz.patients_service.controllers;
 
+import com.santiagocz.patients_service.dto.ApiResponse;
 import com.santiagocz.patients_service.dto.PatientResponseDto;
 import com.santiagocz.patients_service.dto.PatientRequestDto;
 import com.santiagocz.patients_service.services.PatientService;
@@ -64,15 +65,16 @@ public class PatientController {
     // ──────────── STATUS ────────────
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deactivate(@PathVariable Long id) {
         patientService.deactivate(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Paciente dado de baja correctamente."));
     }
 
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<Void> activate(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> activate(@PathVariable Long id) {
         patientService.activate(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Paciente dado de alta correctamente."));
     }
 }
-
