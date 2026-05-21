@@ -155,7 +155,7 @@ public class AffiliateService {
             affiliate.setRelation(dto.getRelation());
         }
 
-        return mapper.toResponse(affiliateRepository.save(affiliate));
+        return mapper.toResponse(affiliate);
     }
 
     // ──────────── STATUS ────────────
@@ -167,16 +167,12 @@ public class AffiliateService {
             throw new AffiliateConflictException("El afiliado ya está inactivo");
         }
         affiliate.setStatus(Status.INACTIVE);
-        affiliateRepository.save(affiliate);
 
         if (affiliate.getAffiliateType() == AffiliateType.PRIMARY) {
             affiliateRepository.findByPrimaryAffiliateIdOrderByLastNameAsc(id)
                     .stream()
                     .filter(d -> d.getStatus() != Status.INACTIVE)
-                    .forEach(d -> {
-                        d.setStatus(Status.INACTIVE);
-                        affiliateRepository.save(d);
-                    });
+                    .forEach(d -> d.setStatus(Status.INACTIVE));
         }
     }
 
@@ -191,7 +187,6 @@ public class AffiliateService {
             throw new AffiliateConflictException("Primero debe darse de alta al titular");
         }
         affiliate.setStatus(Status.ACTIVE);
-        affiliateRepository.save(affiliate);
     }
 
     // ──────────── PRIVATES ────────────
