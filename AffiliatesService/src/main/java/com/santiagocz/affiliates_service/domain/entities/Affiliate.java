@@ -63,6 +63,7 @@ public class Affiliate {
     private AffiliateType affiliateType;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "relation")
     private RelationType relation;
 
     @ManyToOne(fetch = FetchType.LAZY)
