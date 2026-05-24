@@ -1,5 +1,6 @@
 package com.santiagocz.appointments_service.dto.schedule;
 
+import com.santiagocz.appointments_service.domain.enums.Status;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,5 +18,6 @@ public class ScheduleResponseDto {
     private DayOfWeek dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
+    private Status status;
 
 }
