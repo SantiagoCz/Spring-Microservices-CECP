@@ -13,6 +13,10 @@ public class ProfessionalRequestDto {
     @Pattern(regexp = "\\d{8}", message = "El DNI debe tener exactamente 8 dígitos")
     private String dni;
 
+    @NotBlank(message = "La matrícula es obligatoria")
+    @Pattern(regexp = "\\d+", message = "La matrícula debe ser numérica")
+    private String licenseNumber;
+
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 50, message = "El nombre no puede superar los 50 caracteres")
     private String firstName;
