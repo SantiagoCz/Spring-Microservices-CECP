@@ -145,10 +145,12 @@ public class ProfessionalService {
         return ProfessionalResponseDto.builder()
                 .id(professional.getId())
                 .dni(professional.getDni())
+                .licenseNumber(professional.getLicenseNumber())
                 .firstName(professional.getFirstName())
                 .lastName(professional.getLastName())
                 .phoneNumber(professional.getPhoneNumber())
                 .birthDate(professional.getBirthDate())
+                .specialty(professional.getSpecialty())
                 .status(professional.getStatus())
                 .build();
     }
@@ -156,10 +158,12 @@ public class ProfessionalService {
     private Professional buildEntity(ProfessionalRequestDto dto) {
         return Professional.builder()
                 .dni(dto.getDni())
+                .licenseNumber((dto.getLicenseNumber()))
                 .firstName(formatWords(dto.getFirstName()))
                 .lastName(formatWords(dto.getLastName()))
                 .phoneNumber(dto.getPhoneNumber())
                 .birthDate(dto.getBirthDate())
+                .specialty(dto.getSpecialty())
                 .build();
     }
 
