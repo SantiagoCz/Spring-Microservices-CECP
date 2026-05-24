@@ -13,6 +13,7 @@ public class ProfessionalResponseDto {
 
     private Long id;
     private String dni;
+    private String licenseNumber;
     private String firstName;
     private String lastName;
     private String phoneNumber;
