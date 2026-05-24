@@ -16,19 +16,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     List<Schedule> findByProfessionalId(Long professionalId);
 
-    @Query("SELECT p.status FROM Professional p WHERE p.id = :id")
-
     List<Schedule> findByDayOfWeek(DayOfWeek dayOfWeek);
 
     @Query("SELECT COUNT(s) > 0 FROM Schedule s " +
             "WHERE s.professional.id = :professionalId " +
             "AND s.dayOfWeek = :dayOfWeek " +
+            "AND s.status = :status " +
             "AND s.startTime < :endTime " +
             "AND s.endTime > :startTime " +
             "AND (:scheduleId IS NULL OR s.id <> :scheduleId)")
     boolean existsOverlappingSchedule(
             @Param("professionalId") Long professionalId,
             @Param("dayOfWeek") DayOfWeek dayOfWeek,
+            @Param("status") Status status,
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime,
             @Param("scheduleId") Long scheduleId);
