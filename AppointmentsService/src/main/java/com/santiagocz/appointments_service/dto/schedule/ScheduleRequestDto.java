@@ -10,16 +10,16 @@ import java.time.LocalTime;
 @Data
 public class ScheduleRequestDto {
 
-    @NotNull(message = "Professional ID is required")
+    @NotNull(message = "El ID del profesional es obligatorio")
     private Long professionalId;
 
-    @NotNull(message = "Day of week is required")
+    @NotNull(message = "El día de la semana es obligatorio")
     private DayOfWeek dayOfWeek;
 
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "La hora de inicio es obligatoria")
     private LocalTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "La hora de fin es obligatoria")
     private LocalTime endTime;
 
     @AssertTrue(message = "La hora de inicio debe ser anterior a la hora de fin")
