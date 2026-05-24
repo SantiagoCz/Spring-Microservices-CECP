@@ -10,11 +10,11 @@
 	</parent>
 
 	<groupId>com.santiagocz</groupId>
-	<artifactId>affiliates-service</artifactId>
+	<artifactId>appointments-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>affiliates-service</name>
-	<description>Affiliates Server</description>
+	<name>appointments-service</name>
+	<description>Appointments Server</description>
 	<url/>
 
 	<licenses>
