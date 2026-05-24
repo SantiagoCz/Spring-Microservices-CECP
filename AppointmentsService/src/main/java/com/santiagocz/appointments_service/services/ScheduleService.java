@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.format.TextStyle;
+import java.util.Locale;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -113,16 +115,6 @@ public class ScheduleService {
         schedule.setStatus(Status.INACTIVE);
     }
 
-    @Transactional
-    public void activate(Long id) {
-        Schedule schedule = getEntityById(id);
-        if (schedule.getStatus() == Status.ACTIVE) {
-            throw new EntityConflictException("Horario ya activo");
-        }
-
-        schedule.setStatus(Status.ACTIVE);
-    }
-
     // ──────────── PRIVATES ────────────
 
     private Schedule getEntityById(Long id) {
@@ -131,11 +123,14 @@ public class ScheduleService {
                         "No se encontró el horario con ID: " + id));
     }
 
+
     private void validateNoOverlap(Long professionalId, DayOfWeek day,
                                    LocalTime start, LocalTime end, Long excludeScheduleId) {
-        if (scheduleRepository.existsOverlappingSchedule(professionalId, day, start, end, excludeScheduleId)) {
+        if (scheduleRepository.existsOverlappingSchedule(
+                professionalId, day, Status.ACTIVE, start, end, excludeScheduleId)) {
+            String dia = day.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es"));
             throw new EntityConflictException(
-                    "El horario se superpone con otro existente el día " + day);
+                    "El horario se superpone con otro existente el día " + dia);
         }
     }
 
@@ -150,6 +145,7 @@ public class ScheduleService {
                 .dayOfWeek(schedule.getDayOfWeek())
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
+                .status(schedule.getStatus())
                 .build();
     }
 }
