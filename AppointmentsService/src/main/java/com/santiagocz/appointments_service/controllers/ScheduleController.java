@@ -68,10 +68,4 @@ public class ScheduleController {
                 new ApiResponse(HttpStatus.OK.value(), "Horario dado de baja correctamente."));
     }
 
-    @PatchMapping("/{id}/activate")
-    public ResponseEntity<ApiResponse> activate(@PathVariable Long id) {
-        scheduleService.activate(id);
-        return ResponseEntity.ok(
-                new ApiResponse(HttpStatus.OK.value(), "Horario dado de alta correctamente."));
-    }
 }
