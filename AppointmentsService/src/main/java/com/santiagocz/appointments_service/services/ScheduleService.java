@@ -76,6 +76,18 @@ public class ScheduleService {
     }
 
     @Transactional(readOnly = true)
+    public List<ScheduleResponseDto> findActivesByProfessionalId(Long professionalId) {
+        if (!professionalRepository.existsById(professionalId)) {
+            throw new EntityNotFoundException(
+                    "No se encontró el profesional con ID: " + professionalId);
+        }
+        return scheduleRepository.findByStatusAndProfessionalId(Status.ACTIVE, professionalId)
+                .stream()
+                .map(this::buildResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<ScheduleResponseDto> findByDayOfWeek(DayOfWeek dayOfWeek) {
         return scheduleRepository.findByDayOfWeek(dayOfWeek)
                 .stream()

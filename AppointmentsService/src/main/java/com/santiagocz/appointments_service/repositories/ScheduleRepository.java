@@ -16,6 +16,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     List<Schedule> findByProfessionalId(Long professionalId);
 
+    List<Schedule> findByStatusAndProfessionalId(Status status, Long professionalId);
+
     List<Schedule> findByDayOfWeek(DayOfWeek dayOfWeek);
 
     @Query("SELECT COUNT(s) > 0 FROM Schedule s " +

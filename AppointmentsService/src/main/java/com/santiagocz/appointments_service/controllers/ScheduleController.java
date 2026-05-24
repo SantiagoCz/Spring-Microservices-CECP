@@ -44,6 +44,12 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.findByProfessionalId(professionalId));
     }
 
+    @GetMapping("/actives-by-professional/{professionalId}")
+    public ResponseEntity<List<ScheduleResponseDto>> findActivesByProfessionalId(
+            @PathVariable Long professionalId) {
+        return ResponseEntity.ok(scheduleService.findActivesByProfessionalId(professionalId));
+    }
+
     @GetMapping("/day/{dayOfWeek}")
     public ResponseEntity<List<ScheduleResponseDto>> findByDayOfWeek(
             @PathVariable DayOfWeek dayOfWeek) {
