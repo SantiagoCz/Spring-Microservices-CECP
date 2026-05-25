@@ -10,10 +10,7 @@ import com.santiagocz.appointments_service.dto.appointment.AppointmentRequestDto
 import com.santiagocz.appointments_service.dto.appointment.AppointmentResponseDto;
 import com.santiagocz.appointments_service.exceptions.EntityConflictException;
 import com.santiagocz.appointments_service.exceptions.EntityNotFoundException;
-import com.santiagocz.appointments_service.repositories.AppointmentRepository;
-import com.santiagocz.appointments_service.repositories.PatientRepository;
-import com.santiagocz.appointments_service.repositories.ProfessionalRepository;
-import com.santiagocz.appointments_service.repositories.ScheduleRepository;
+import com.santiagocz.appointments_service.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +26,7 @@ import java.util.Set;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final BlockedPeriodRepository blockedPeriodRepository;
     private final ProfessionalRepository professionalRepository;
     private final PatientRepository patientRepository;
     private final ScheduleRepository scheduleRepository;
@@ -49,8 +47,9 @@ public class AppointmentService {
 
         // 1. El turno tiene que caer dentro de un horario en que el profesional atiende
         validateWithinSchedule(professional.getId(), start, end);
-
-        // 2. Capacidad: solo se valida para REGULAR; el sobreturno la saltea
+        // 2. Verificar que no sea feriado, vacaciones, etc.
+        validateDateAvailable(professional.getId(), start.toLocalDate());
+        // 3. Capacidad: solo se valida para REGULAR; el sobreturno la saltea
         if (dto.getType() == AppointmentType.REGULAR) {
             validateCapacity(professional, start, end, null);
         }
@@ -106,10 +105,7 @@ public class AppointmentService {
             throw new EntityConflictException("Solo se puede reprogramar un turno programado o confirmado");
         }
 
-        Professional professional = appointment.getProfessional();
-        if (professional.getStatus() != Status.ACTIVE) {
-            throw new EntityConflictException("El profesional del turno no está activo");
-        }
+        Professional professional = getActiveProfessional(appointment.getProfessional().getId());
 
         LocalDateTime start = dto.getStartDateTime();
         LocalDateTime end = start.plusMinutes(dto.getDurationMinutes());
@@ -166,7 +162,7 @@ public class AppointmentService {
     // ──────────── PRIVATES ────────────
 
     private Professional getActiveProfessional(Long professionalId) {
-        Professional professional = professionalRepository.findById(professionalId)
+        Professional professional = professionalRepository.findByIdWithLock(professionalId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró el profesional con ID: " + professionalId));
         if (professional.getStatus() != Status.ACTIVE) {
@@ -206,6 +202,13 @@ public class AppointmentService {
         if (occupied >= professional.getSlotCapacity()) {
             throw new EntityConflictException(
                     "El profesional ya tiene la agenda completa en ese horario");
+        }
+    }
+
+    private void validateDateAvailable(Long professionalId, LocalDate date) {
+        if (blockedPeriodRepository.existsBlockOnDate(professionalId, date)) {
+            throw new EntityConflictException(
+                    "El profesional no atiende ese día.");
         }
     }
 

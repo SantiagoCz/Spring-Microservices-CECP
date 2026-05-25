@@ -18,6 +18,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByProfessionalId(Long professionalId);
     List<Appointment> findByPatientId(Long patientId);
 
+    // Listar turnos por profesional, status, y día y hora de inicio
+    List<Appointment> findByProfessionalIdAndStatusInAndStartDateTimeAfter(
+            Long professionalId, Collection<AppointmentStatus> statuses, LocalDateTime from);
+
+    // Listar turnos activos que caen dentro del rango bloqueado (BlockedPeriod)
+    @Query("SELECT a FROM Appointment a " +
+            "WHERE (:professionalId IS NULL OR a.professional.id = :professionalId) " +
+            "AND a.status IN :statuses " +
+            "AND a.startDateTime >= :from AND a.startDateTime <= :to")
+    List<Appointment> findActiveInRange(@Param("professionalId") Long professionalId,
+                                        @Param("statuses") Collection<AppointmentStatus> statuses,
+                                        @Param("from") LocalDateTime from,
+                                        @Param("to") LocalDateTime to);
+
     // Agenda de un profesional en un rango (un día, una semana)
     List<Appointment> findByProfessionalIdAndStartDateTimeBetween(
             Long professionalId, LocalDateTime from, LocalDateTime to);
