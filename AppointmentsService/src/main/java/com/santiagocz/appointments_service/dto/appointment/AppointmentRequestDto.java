@@ -1,9 +1,7 @@
 package com.santiagocz.appointments_service.dto.appointment;
 
 import com.santiagocz.appointments_service.domain.enums.AppointmentType;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,7 +20,8 @@ public class AppointmentRequestDto {
     private LocalDateTime startDateTime;
 
     @NotNull(message = "La duración es obligatoria")
-    @Positive(message = "La duración debe ser positiva")
+    @Min(value = 30, message = "La duración mínima es 30 minutos")
+    @Max(value = 60, message = "La duración máxima es 60 minutos")
     private Integer durationMinutes;
 
     @NotNull(message = "El tipo de turno es obligatorio")
