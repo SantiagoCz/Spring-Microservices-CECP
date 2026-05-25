@@ -1,12 +1,15 @@
 package com.santiagocz.appointments_service.services;
 
+import com.santiagocz.appointments_service.domain.entities.Appointment;
 import com.santiagocz.appointments_service.domain.entities.Professional;
 import com.santiagocz.appointments_service.domain.entities.Schedule;
+import com.santiagocz.appointments_service.domain.enums.AppointmentStatus;
 import com.santiagocz.appointments_service.domain.enums.Status;
 import com.santiagocz.appointments_service.dto.schedule.ScheduleRequestDto;
 import com.santiagocz.appointments_service.dto.schedule.ScheduleResponseDto;
 import com.santiagocz.appointments_service.exceptions.EntityConflictException;
 import com.santiagocz.appointments_service.exceptions.EntityNotFoundException;
+import com.santiagocz.appointments_service.repositories.AppointmentRepository;
 import com.santiagocz.appointments_service.repositories.ProfessionalRepository;
 import com.santiagocz.appointments_service.repositories.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.util.Locale;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +31,10 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final ProfessionalRepository professionalRepository;
+    private final AppointmentRepository appointmentRepository;
+
+    private static final Set<AppointmentStatus> ACTIVE_APPOINTMENT_STATUSES =
+            Set.of(AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED);
 
     // ──────────── CREATE ────────────
 
@@ -124,6 +133,7 @@ public class ScheduleService {
         if (schedule.getStatus() == Status.INACTIVE) {
             throw new EntityConflictException("Horario ya inactivo");
         }
+        validateNoActiveAppointments(schedule);
         schedule.setStatus(Status.INACTIVE);
     }
 
@@ -143,6 +153,24 @@ public class ScheduleService {
             String dia = day.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es"));
             throw new EntityConflictException(
                     "El horario se superpone con otro existente el día " + dia);
+        }
+    }
+
+    private void validateNoActiveAppointments(Schedule schedule) {
+        List<Appointment> upcoming = appointmentRepository
+                .findByProfessionalIdAndStatusInAndStartDateTimeAfter(
+                        schedule.getProfessional().getId(),
+                        ACTIVE_APPOINTMENT_STATUSES,
+                        LocalDateTime.now());
+
+        boolean hasActiveAppointments = upcoming.stream().anyMatch(a ->
+                a.getStartDateTime().getDayOfWeek() == schedule.getDayOfWeek()
+                        && a.getStartDateTime().toLocalTime().isBefore(schedule.getEndTime())
+                        && a.getEndDateTime().toLocalTime().isAfter(schedule.getStartTime()));
+
+        if (hasActiveAppointments) {
+            throw new EntityConflictException(
+                    "No se puede desactivar el horario: tiene turnos activos. Cancelalos primero.");
         }
     }
 
