@@ -111,6 +111,8 @@ public class AppointmentService {
         LocalDateTime end = start.plusMinutes(dto.getDurationMinutes());
 
         validateWithinSchedule(professional.getId(), start, end);
+        validateDateAvailable(professional.getId(), start.toLocalDate());
+
         if (dto.getType() == AppointmentType.REGULAR) {
             validateCapacity(professional, start, end, appointment.getId());
         }
