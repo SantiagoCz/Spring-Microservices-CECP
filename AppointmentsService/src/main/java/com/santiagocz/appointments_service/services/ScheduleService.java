@@ -115,6 +115,8 @@ public class ScheduleService {
                     "No se puede editar el horario: el profesional está inactivo");
         }
 
+        validateNoActiveAppointments(schedule);
+
         validateNoOverlap(schedule.getProfessional().getId(), dto.getDayOfWeek(),
                 dto.getStartTime(), dto.getEndTime(), schedule.getId());
 
@@ -170,7 +172,7 @@ public class ScheduleService {
 
         if (hasActiveAppointments) {
             throw new EntityConflictException(
-                    "No se puede desactivar el horario: tiene turnos activos. Cancelalos primero.");
+                    "No se puede modificar el horario: tiene turnos activos. Cancelalos primero.");
         }
     }
 
