@@ -1,6 +1,7 @@
 package com.santiagocz.appointments_service.services;
 
 import com.santiagocz.appointments_service.domain.entities.Professional;
+import com.santiagocz.appointments_service.domain.enums.Specialty;
 import com.santiagocz.appointments_service.domain.enums.Status;
 import com.santiagocz.appointments_service.dto.professional.ProfessionalRequestDto;
 import com.santiagocz.appointments_service.dto.professional.ProfessionalResponseDto;
@@ -24,6 +25,7 @@ public class ProfessionalService {
     @Transactional
     public ProfessionalResponseDto create(ProfessionalRequestDto dto) {
         validateDniNotInUse(dto.getDni());
+        validateLicenseNumberNotInUse(dto.getLicenseNumber(), dto.getSpecialty());
 
         Professional professional = buildEntity(dto);
         professional.setStatus(Status.ACTIVE);
@@ -72,11 +74,18 @@ public class ProfessionalService {
             validateDniNotInUse(dto.getDni());
         }
 
+        if (!professional.getLicenseNumber().equals(dto.getLicenseNumber())
+                || professional.getSpecialty() != dto.getSpecialty()) {
+            validateLicenseNumberNotInUse(dto.getLicenseNumber(), dto.getSpecialty());
+        }
+
         professional.setDni(dto.getDni());
         professional.setFirstName(formatWords(dto.getFirstName()));
         professional.setLastName(formatWords(dto.getLastName()));
         professional.setPhoneNumber(dto.getPhoneNumber());
         professional.setBirthDate(dto.getBirthDate());
+        professional.setLicenseNumber(dto.getLicenseNumber());
+        professional.setSpecialty(dto.getSpecialty());
 
         return buildResponseDto(professional);
     }
@@ -113,6 +122,13 @@ public class ProfessionalService {
     private void validateDniNotInUse(String dni) {
         if (professionalRepository.existsByDni(dni)) {
             throw new EntityConflictException("Ya existe un profesional con el DNI: " + dni);
+        }
+    }
+
+    private void validateLicenseNumberNotInUse(String licenseNumber, Specialty specialty) {
+        if (professionalRepository.existsByLicenseNumberAndSpecialty(licenseNumber, specialty)) {
+            throw new EntityConflictException(
+                    "Ya existe un profesional con matrícula " + licenseNumber + " para la especialidad " + specialty.getDisplayName());
         }
     }
 

@@ -1,6 +1,7 @@
 package com.santiagocz.appointments_service.repositories;
 
 import com.santiagocz.appointments_service.domain.entities.Professional;
+import com.santiagocz.appointments_service.domain.enums.Specialty;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,8 @@ public interface ProfessionalRepository extends JpaRepository<Professional, Long
     Optional<Professional> findByDni(String dni);
 
     boolean existsByDni(String dni);
+
+    boolean existsByLicenseNumberAndSpecialty(String licenseNumber, Specialty specialty);
 
     Page<Professional> findAllByOrderByLastNameAsc(Pageable pageable);
 
