@@ -5,6 +5,7 @@ import com.santiagocz.appointments_service.domain.entities.BlockedPeriod;
 import com.santiagocz.appointments_service.domain.entities.Professional;
 import com.santiagocz.appointments_service.domain.enums.AppointmentStatus;
 import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodRequestDto;
+import com.santiagocz.appointments_service.exceptions.EntityConflictException;
 import com.santiagocz.appointments_service.exceptions.EntityNotFoundException;
 import com.santiagocz.appointments_service.repositories.*;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,11 @@ public class BlockedPeriodService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró el profesional con ID: " + professionalId));
 
+        if (blockedPeriodRepository.existsOverlappingBlock(professionalId, startDate, endDate)) {
+            throw new EntityConflictException(
+                    "Ya existe un bloqueo que se superpone con ese período");
+        }
+
         blockedPeriodRepository.save(BlockedPeriod.builder()
                 .professional(professional)
                 .startDate(startDate)
@@ -47,7 +53,6 @@ public class BlockedPeriodService {
                 .reason(reason)
                 .build());
 
-        // Cancelar los turnos activos que caen en el rango
         List<Appointment> affected = appointmentRepository.findActiveInRange(
                 professionalId, ACTIVE_STATUSES,
                 startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));

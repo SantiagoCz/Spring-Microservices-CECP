@@ -15,4 +15,12 @@ public interface BlockedPeriodRepository extends JpaRepository<BlockedPeriod, Lo
     boolean existsBlockOnDate(@Param("professionalId") Long professionalId,
                               @Param("date") LocalDate date);
 
+    @Query("SELECT COUNT(b) > 0 FROM BlockedPeriod b " +
+            "WHERE ((:professionalId IS NULL AND b.professional IS NULL) " +
+            "    OR b.professional.id = :professionalId) " +
+            "AND b.startDate <= :endDate AND b.endDate >= :startDate")
+    boolean existsOverlappingBlock(@Param("professionalId") Long professionalId,
+                                   @Param("startDate") LocalDate startDate,
+                                   @Param("endDate") LocalDate endDate);
+
 }
