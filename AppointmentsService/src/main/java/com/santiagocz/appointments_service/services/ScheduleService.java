@@ -115,7 +115,7 @@ public class ScheduleService {
                     "No se puede editar el horario: el profesional está inactivo");
         }
 
-        validateNoActiveAppointments(schedule);
+        validateNoAppointmentsAffectedByChange(schedule, dto);
 
         validateNoOverlap(schedule.getProfessional().getId(), dto.getDayOfWeek(),
                 dto.getStartTime(), dto.getEndTime(), schedule.getId());
@@ -172,7 +172,39 @@ public class ScheduleService {
 
         if (hasActiveAppointments) {
             throw new EntityConflictException(
-                    "No se puede modificar el horario: tiene turnos activos. Cancelalos primero.");
+                    "No se puede eliminar el horario: tiene turnos activos. Cancelalos primero.");
+        }
+    }
+
+    private void validateNoAppointmentsAffectedByChange(Schedule schedule, ScheduleRequestDto dto) {
+        List<Appointment> upcoming = appointmentRepository
+                .findByProfessionalIdAndStatusInAndStartDateTimeAfter(
+                        schedule.getProfessional().getId(),
+                        ACTIVE_APPOINTMENT_STATUSES,
+                        LocalDateTime.now());
+
+        // Si cambia el día, no debe haber turnos en el día anterior
+        if (dto.getDayOfWeek() != schedule.getDayOfWeek()) {
+            boolean hasOnOldDay = upcoming.stream().anyMatch(a ->
+                    a.getStartDateTime().getDayOfWeek() == schedule.getDayOfWeek()
+                            && a.getStartDateTime().toLocalTime().isBefore(schedule.getEndTime())
+                            && a.getEndDateTime().toLocalTime().isAfter(schedule.getStartTime()));
+
+            if (hasOnOldDay) {
+                throw new EntityConflictException(
+                        "No se puede cambiar el día: hay turnos activos en el día actual. Cancelalos primero.");
+            }
+        }
+
+        // Los turnos del nuevo día deben caber en el nuevo rango horario
+        boolean hasAppointmentsOutside = upcoming.stream().anyMatch(a ->
+                a.getStartDateTime().getDayOfWeek() == dto.getDayOfWeek()
+                        && (a.getStartDateTime().toLocalTime().isBefore(dto.getStartTime())
+                        || a.getEndDateTime().toLocalTime().isAfter(dto.getEndTime())));
+
+        if (hasAppointmentsOutside) {
+            throw new EntityConflictException(
+                    "No se puede modificar el horario: hay turnos activos que quedarían fuera del nuevo rango. Cancelalos primero.");
         }
     }
 
