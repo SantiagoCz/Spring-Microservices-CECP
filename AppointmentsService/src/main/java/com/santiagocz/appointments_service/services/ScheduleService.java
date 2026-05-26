@@ -110,6 +110,14 @@ public class ScheduleService {
     public ScheduleResponseDto update(Long id, ScheduleRequestDto dto) {
         Schedule schedule = getEntityById(id);
 
+        if (schedule.getStatus() == Status.INACTIVE) {
+            throw new EntityConflictException("No se puede modificar un horario inactivo");
+        }
+
+        if (!schedule.getProfessional().getId().equals(dto.getProfessionalId())) {
+            throw new EntityConflictException("No se puede reasignar un horario a otro profesional");
+        }
+
         if (schedule.getProfessional().getStatus() != Status.ACTIVE) {
             throw new EntityConflictException(
                     "No se puede editar el horario: el profesional está inactivo");
