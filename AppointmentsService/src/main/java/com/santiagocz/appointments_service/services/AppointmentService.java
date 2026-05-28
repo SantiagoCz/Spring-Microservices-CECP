@@ -122,12 +122,7 @@ public class AppointmentService {
         appointment.setType(dto.getType());
         appointment.setStatus(AppointmentStatus.SCHEDULED);
 
-        return buildResponseDto(appointmentRepository.save(appointment));
-    }
-
-    private Appointment getEntityById(Long id) {
-        return appointmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("No se encontró el turno con ID: " + id));
+        return buildResponseDto(appointment);
     }
 
     // ──────────── STATUS ────────────
@@ -162,6 +157,11 @@ public class AppointmentService {
     }
 
     // ──────────── PRIVATES ────────────
+
+    private Appointment getEntityById(Long id) {
+        return appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("No se encontró el turno con ID: " + id));
+    }
 
     private Professional getActiveProfessional(Long professionalId) {
         Professional professional = professionalRepository.findByIdWithLock(professionalId)
