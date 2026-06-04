@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/affiliates")
@@ -77,6 +78,11 @@ public class AffiliateController {
     @GetMapping("/primaries/{id}/with-family")
     public ResponseEntity<AffiliateResponseDto> getPrimaryWithFamily(@PathVariable Long id) {
         return ResponseEntity.ok(affiliateService.getPrimaryWithFamily(id));
+    }
+
+    @PostMapping("/active-dnis")
+    public ResponseEntity<Set<String>> filterActiveDnis(@RequestBody List<String> dnis) {
+        return ResponseEntity.ok(affiliateService.filterActiveDnis(dnis));
     }
 
     // ──────────── UPDATE ────────────

@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -127,6 +129,14 @@ public class AffiliateService {
                 : affiliate.getPrimaryAffiliate().getId();
         return affiliateRepository.findFamilyGroupByPrimaryId(primaryId)
                 .stream().map(mapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Set<String> filterActiveDnis(List<String> dnis) {
+        if (dnis == null || dnis.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(affiliateRepository.findActiveDnisIn(dnis));
     }
 
     // ──────────── UPDATE ────────────
