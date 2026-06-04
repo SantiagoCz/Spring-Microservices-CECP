@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final AffiliationLookupService affiliationLookupService;
 
     // ──────────── CREATE ────────────
 
@@ -42,7 +43,7 @@ public class PatientService {
         Patient patient = patientRepository.findByDni(dni)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró paciente con DNI: " + dni));
-        return buildResponseDto(patient);
+        return buildResponseDto(patient, affiliationLookupService.isActive(patient.getDni()));
     }
 
     @Transactional(readOnly = true)
@@ -142,6 +143,10 @@ public class PatientService {
 
     // Mappers
     private PatientResponseDto buildResponseDto(Patient patient) {
+        return buildResponseDto(patient, null);
+    }
+
+    private PatientResponseDto buildResponseDto(Patient patient, Boolean affiliated) {
         return PatientResponseDto.builder()
                 .id(patient.getId())
                 .dni(patient.getDni())
@@ -150,6 +155,7 @@ public class PatientService {
                 .phoneNumber(patient.getPhoneNumber())
                 .birthDate(patient.getBirthDate())
                 .status(patient.getStatus())
+                .affiliated(affiliated)
                 .build();
     }
 

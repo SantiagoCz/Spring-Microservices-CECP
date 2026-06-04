@@ -1,5 +1,6 @@
 package com.santiagocz.appointments_service.services;
 
+import com.santiagocz.appointments_service.clients.AffiliateClient;
 import com.santiagocz.appointments_service.domain.entities.Appointment;
 import com.santiagocz.appointments_service.domain.entities.Patient;
 import com.santiagocz.appointments_service.domain.entities.Professional;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -30,6 +32,7 @@ public class AppointmentService {
     private final ProfessionalRepository professionalRepository;
     private final PatientRepository patientRepository;
     private final ScheduleRepository scheduleRepository;
+    private final AffiliationLookupService affiliationLookupService;
 
     // Estados que NO ocupan un lugar en la agenda
     private static final Set<AppointmentStatus> NON_OCCUPYING_STATUSES =
@@ -85,13 +88,37 @@ public class AppointmentService {
                 .stream().map(this::buildResponseDto).toList();
     }
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
+//    public List<AppointmentResponseDto> findProfessionalAgenda(Long professionalId, LocalDate date) {
+//        LocalDateTime from = date.atStartOfDay();
+//        LocalDateTime to = date.atTime(LocalTime.MAX);
+//        return appointmentRepository
+//                .findByProfessionalIdAndStartDateTimeBetween(professionalId, from, to)
+//                .stream().map(this::buildResponseDto).toList();
+//    }
+
     public List<AppointmentResponseDto> findProfessionalAgenda(Long professionalId, LocalDate date) {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.atTime(LocalTime.MAX);
-        return appointmentRepository
-                .findByProfessionalIdAndStartDateTimeBetween(professionalId, from, to)
-                .stream().map(this::buildResponseDto).toList();
+
+        List<Appointment> appointments = appointmentRepository
+                .findByProfessionalIdAndStartDateTimeBetween(professionalId, from, to);
+
+        if (appointments.isEmpty()) return List.of();
+
+        List<String> dnis = appointments.stream()
+                .map(a -> a.getPatient().getDni())
+                .distinct()
+                .toList();
+
+        Optional<Set<String>> activeDnis = affiliationLookupService.activeDnisFromBatch(dnis);
+
+        return appointments.stream()
+                .map(a -> buildResponseDto(
+                        a,
+                        activeDnis.map(set -> set.contains(a.getPatient().getDni())).orElse(null)
+                ))
+                .toList();
     }
 
     // ──────────── UPDATE ────────────
@@ -228,6 +255,23 @@ public class AppointmentService {
                 .endDateTime(appointment.getEndDateTime())
                 .status(appointment.getStatus().getDisplayName())
                 .type(appointment.getType().getDisplayName())
+                .build();
+    }
+
+    private AppointmentResponseDto buildResponseDto(Appointment appointment, Boolean affiliated) {
+        Professional professional = appointment.getProfessional();
+        Patient patient = appointment.getPatient();
+        return AppointmentResponseDto.builder()
+                .id(appointment.getId())
+                .professionalId(professional.getId())
+                .professionalName(professional.getFirstName() + " " + professional.getLastName())
+                .patientId(patient.getId())
+                .patientName(patient.getFirstName() + " " + patient.getLastName())
+                .startDateTime(appointment.getStartDateTime())
+                .endDateTime(appointment.getEndDateTime())
+                .status(appointment.getStatus().getDisplayName())
+                .type(appointment.getType().getDisplayName())
+                .patientAffiliated(affiliated)
                 .build();
     }
 }
