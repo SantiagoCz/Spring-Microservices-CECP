@@ -1,7 +1,7 @@
 package com.santiagocz.affiliates_service.controllers;
 
-import com.santiagocz.affiliates_service.dto.AffiliateRequestDto;
-import com.santiagocz.affiliates_service.dto.AffiliateResponseDto;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.dto.ApiResponse;
 import com.santiagocz.affiliates_service.services.AffiliateService;
 import jakarta.validation.Valid;

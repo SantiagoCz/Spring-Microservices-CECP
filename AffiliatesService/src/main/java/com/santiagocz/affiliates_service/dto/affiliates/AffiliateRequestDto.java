@@ -1,4 +1,4 @@
-package com.santiagocz.affiliates_service.dto;
+package com.santiagocz.affiliates_service.dto.affiliates;
 
 import com.santiagocz.affiliates_service.domain.enums.RelationType;
 import jakarta.validation.constraints.NotBlank;

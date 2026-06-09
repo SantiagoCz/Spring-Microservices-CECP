@@ -1,12 +1,10 @@
 package com.santiagocz.affiliates_service.component;
 
-import com.santiagocz.affiliates_service.dto.AffiliateResponseDto;
-import com.santiagocz.affiliates_service.dto.PrimarySummaryDto;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
+import com.santiagocz.affiliates_service.dto.affiliates.PrimarySummaryDto;
 import com.santiagocz.affiliates_service.domain.entities.Affiliate;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class AffiliateMapper {

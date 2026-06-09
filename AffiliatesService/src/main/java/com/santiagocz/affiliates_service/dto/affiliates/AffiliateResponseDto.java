@@ -1,4 +1,4 @@
-package com.santiagocz.affiliates_service.dto;
+package com.santiagocz.affiliates_service.dto.affiliates;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;

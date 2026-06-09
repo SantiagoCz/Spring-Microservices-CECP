@@ -1,4 +1,4 @@
-package com.santiagocz.affiliates_service.dto;
+package com.santiagocz.affiliates_service.dto.affiliates;
 
 import lombok.Builder;
 import lombok.Data;
