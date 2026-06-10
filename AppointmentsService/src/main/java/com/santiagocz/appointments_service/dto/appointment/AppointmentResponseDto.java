@@ -26,4 +26,6 @@ public class AppointmentResponseDto {
     private String type;
 
     private Boolean patientAffiliated;
+
+    private String notes;
 }

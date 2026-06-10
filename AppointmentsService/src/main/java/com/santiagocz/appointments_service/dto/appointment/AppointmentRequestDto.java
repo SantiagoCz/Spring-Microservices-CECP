@@ -27,4 +27,7 @@ public class AppointmentRequestDto {
     @NotNull(message = "El tipo de turno es obligatorio")
     private AppointmentType type;
 
+    @Size(max = 500, message = "El motivo no puede superar los 500 caracteres")
+    private String notes;
+
 }

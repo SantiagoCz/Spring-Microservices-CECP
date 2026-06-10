@@ -42,4 +42,7 @@ public class Appointment {
     @ManyToOne
     @JoinColumn(name = "professional_id", nullable = false)
     private Professional professional;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 }

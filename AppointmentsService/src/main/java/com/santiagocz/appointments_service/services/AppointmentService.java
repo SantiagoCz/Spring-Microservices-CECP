@@ -64,6 +64,7 @@ public class AppointmentService {
                 .endDateTime(end)
                 .status(AppointmentStatus.SCHEDULED)
                 .type(dto.getType())
+                .notes(dto.getNotes())
                 .build();
 
         return buildResponseDto(appointmentRepository.save(appointment));
@@ -88,15 +89,7 @@ public class AppointmentService {
                 .stream().map(this::buildResponseDto).toList();
     }
 
-//    @Transactional(readOnly = true)
-//    public List<AppointmentResponseDto> findProfessionalAgenda(Long professionalId, LocalDate date) {
-//        LocalDateTime from = date.atStartOfDay();
-//        LocalDateTime to = date.atTime(LocalTime.MAX);
-//        return appointmentRepository
-//                .findByProfessionalIdAndStartDateTimeBetween(professionalId, from, to)
-//                .stream().map(this::buildResponseDto).toList();
-//    }
-
+    @Transactional(readOnly = true)
     public List<AppointmentResponseDto> findProfessionalAgenda(Long professionalId, LocalDate date) {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.atTime(LocalTime.MAX);
@@ -148,6 +141,7 @@ public class AppointmentService {
         appointment.setEndDateTime(end);
         appointment.setType(dto.getType());
         appointment.setStatus(AppointmentStatus.SCHEDULED);
+        appointment.setNotes(dto.getNotes());
 
         return buildResponseDto(appointment);
     }
@@ -255,6 +249,7 @@ public class AppointmentService {
                 .endDateTime(appointment.getEndDateTime())
                 .status(appointment.getStatus().getDisplayName())
                 .type(appointment.getType().getDisplayName())
+                .notes(appointment.getNotes())
                 .build();
     }
 
@@ -272,6 +267,7 @@ public class AppointmentService {
                 .status(appointment.getStatus().getDisplayName())
                 .type(appointment.getType().getDisplayName())
                 .patientAffiliated(affiliated)
+                .notes(appointment.getNotes())
                 .build();
     }
 }
