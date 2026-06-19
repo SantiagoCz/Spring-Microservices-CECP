@@ -32,6 +32,7 @@
         <module>AffiliatesService</module>
         <module>AppointmentsService</module>
         <module>DentalService</module>
+        <module>EmployeesService</module>
     </modules>
 
     <build>
