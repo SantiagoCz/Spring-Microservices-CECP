@@ -1,28 +1,22 @@
 package com.santiagocz.employees_service.dto.attendance;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class AttendanceRequestDto {
 
-    @NotNull(message = "Employee ID is required")
+    @NotNull(message = "El ID del empleado es obligatorio")
     private Long employeeId;
 
-    @NotNull(message = "Check-in time is required")
-    @PastOrPresent(message = "Check-in time cannot be in the future")
+    @NotNull(message = "La fecha y hora de entrada es obligatoria")
     private LocalDateTime checkIn;
 
     private LocalDateTime checkOut;
 
+    @Size(max = 500, message = "Las notas no pueden superar los 500 caracteres")
     private String notes;
 }
