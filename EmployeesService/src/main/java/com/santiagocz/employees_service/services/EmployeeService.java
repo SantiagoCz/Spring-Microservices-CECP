@@ -26,7 +26,7 @@ public class EmployeeService {
     public EmployeeResponseDto create(EmployeeRequestDto dto) {
         validateDniNotInUse(dto.getDni());
 
-        Employee employee = buildEntity(dto);
+        Employee employee = buildEmployee(dto);
         employee.setStatus(EmployeeStatus.ACTIVE);
         return buildResponseDto(employeeRepository.save(employee));
     }
@@ -183,7 +183,7 @@ public class EmployeeService {
                 .build();
     }
 
-    private Employee buildEntity(EmployeeRequestDto dto) {
+    private Employee buildEmployee(EmployeeRequestDto dto) {
         return Employee.builder()
                 .dni(dto.getDni())
                 .firstName(formatWords(dto.getFirstName()))
