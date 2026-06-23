@@ -38,6 +38,11 @@ public class ScheduleController {
 
     // ──────────── READ ────────────
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ScheduleResponseDto> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(scheduleService.findById(id));
+    }
+
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<List<ScheduleResponseDto>> findByEmployeeId(
             @PathVariable Long employeeId) {

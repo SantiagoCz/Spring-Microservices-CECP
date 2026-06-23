@@ -55,6 +55,11 @@ public class ScheduleService {
     // ──────────── READ ────────────
 
     @Transactional(readOnly = true)
+    public ScheduleResponseDto findById(Long id) {
+        return buildResponseDto(getScheduleById(id));
+    }
+
+    @Transactional(readOnly = true)
     public List<ScheduleResponseDto> findByEmployeeId(Long employeeId) {
         employeeService.validateEmployeeExists(employeeId);
         return scheduleRepository.findByEmployeeIdFetchEmployee(employeeId)
