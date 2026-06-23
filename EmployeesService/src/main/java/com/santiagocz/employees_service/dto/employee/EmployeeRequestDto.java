@@ -3,42 +3,36 @@ package com.santiagocz.employees_service.dto.employee;
 import com.santiagocz.employees_service.domain.enums.Delegation;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class EmployeeRequestDto {
 
-    @NotBlank(message = "DNI is required")
-    @Pattern(regexp = "\\d{8}", message = "DNI must have 8 digits")
+    @NotBlank(message = "El DNI es obligatorio")
+    @Pattern(regexp = "\\d{8}", message = "El DNI debe tener 8 dígitos")
     private String dni;
 
-    @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(min = 2, max = 50, message = "El apellido debe tener entre 2 y 50 caracteres")
     private String lastName;
 
-    @NotBlank(message = "Phone is required")
-    @Pattern(regexp = "^[+]?[0-9]{7,15}$", message = "Phone number must be valid")
+    @NotBlank(message = "El teléfono es obligatorio")
+    @Pattern(regexp = "^[+]?[0-9]{7,15}$", message = "El teléfono no es válido")
     private String phone;
 
-    @NotNull(message = "Birth date is required")
-    @Past(message = "Birth date must be in the past")
+    @NotNull(message = "La fecha de nacimiento es obligatoria")
+    @Past(message = "La fecha de nacimiento debe ser una fecha pasada")
     private LocalDate birthDate;
 
-    @NotNull(message = "Delegation is required")
+    @NotNull(message = "La delegación es obligatoria")
     private Delegation delegation;
 
-    @NotNull(message = "Role is required")
+    @NotNull(message = "El rol es obligatorio")
     private EmployeeRole role;
 }

@@ -1,29 +1,23 @@
 package com.santiagocz.employees_service.dto.schedule;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ScheduleRequestDto {
 
-    @NotNull(message = "Employee ID is required")
+    @NotNull(message = "El ID del empleado es obligatorio")
     private Long employeeId;
 
-    @NotNull(message = "Day of week is required")
+    @NotNull(message = "El día de la semana es obligatorio")
     private DayOfWeek dayOfWeek;
 
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "La hora de inicio es obligatoria")
     private LocalTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "La hora de fin es obligatoria")
     private LocalTime endTime;
 }
