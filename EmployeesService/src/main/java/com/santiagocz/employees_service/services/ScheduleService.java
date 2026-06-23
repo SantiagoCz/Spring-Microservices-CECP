@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -111,8 +113,8 @@ public class ScheduleService {
     private void validateNoOverlap(Long employeeId, DayOfWeek day,
                                    LocalTime start, LocalTime end, Long excludeScheduleId) {
         if (scheduleRepository.existsOverlappingSchedule(
-                employeeId, day, EmployeeStatus.ACTIVE, start, end, excludeScheduleId)) {
-            String dia = day.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.forLanguageTag("es"));
+                employeeId, day, start, end, excludeScheduleId)) {
+            String dia = day.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es"));
             throw new EntityConflictException(
                     "El horario se superpone con otro existente el día " + dia);
         }
