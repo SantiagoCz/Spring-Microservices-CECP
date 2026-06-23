@@ -2,7 +2,6 @@ package com.santiagocz.employees_service.services;
 
 import com.santiagocz.employees_service.domain.entities.Employee;
 import com.santiagocz.employees_service.domain.entities.Schedule;
-import com.santiagocz.employees_service.domain.enums.EmployeeStatus;
 import com.santiagocz.employees_service.dto.schedule.ScheduleRequestDto;
 import com.santiagocz.employees_service.dto.schedule.ScheduleResponseDto;
 import com.santiagocz.employees_service.exceptions.EntityConflictException;
@@ -32,7 +31,7 @@ public class ScheduleService {
         Employee employee = employeeService.getEmployeeById(dto.getEmployeeId());
 
         employeeService.validateEmployeeIsActive(employee);
-
+        validateStartBeforeEnd(dto.getStartTime(), dto.getEndTime());
         validateNoOverlap(dto.getEmployeeId(), dto.getDayOfWeek(),
                 dto.getStartTime(), dto.getEndTime(), null);
 
@@ -83,7 +82,7 @@ public class ScheduleService {
         }
 
         employeeService.validateEmployeeIsActive(schedule.getEmployee());
-
+        validateStartBeforeEnd(dto.getStartTime(), dto.getEndTime());
         validateNoOverlap(schedule.getEmployee().getId(), dto.getDayOfWeek(),
                 dto.getStartTime(), dto.getEndTime(), schedule.getId());
 
@@ -108,6 +107,12 @@ public class ScheduleService {
         return scheduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró el horario con ID: " + id));
+    }
+
+    private void validateStartBeforeEnd(LocalTime start, LocalTime end) {
+        if (!start.isBefore(end)) {
+            throw new EntityConflictException("La hora de inicio debe ser anterior a la hora de fin");
+        }
     }
 
     private void validateNoOverlap(Long employeeId, DayOfWeek day,
