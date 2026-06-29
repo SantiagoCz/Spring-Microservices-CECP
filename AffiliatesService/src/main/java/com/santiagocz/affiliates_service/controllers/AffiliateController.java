@@ -3,6 +3,7 @@ package com.santiagocz.affiliates_service.controllers;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.dto.ApiResponse;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
 import com.santiagocz.affiliates_service.services.AffiliateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,11 @@ public class AffiliateController {
         return ResponseEntity.ok(affiliateService.getById(id));
     }
 
+    @GetMapping("/{id}/active")
+    public ResponseEntity<Boolean> isActive(@PathVariable Long id) {
+        return ResponseEntity.ok(affiliateService.isActive(id));
+    }
+
     @GetMapping("/by-dni/{dni}")
     public ResponseEntity<AffiliateResponseDto> getByDni(@PathVariable String dni) {
         return ResponseEntity.ok(affiliateService.getByDni(dni));
@@ -78,6 +84,11 @@ public class AffiliateController {
     @GetMapping("/primaries/{id}/with-family")
     public ResponseEntity<AffiliateResponseDto> getPrimaryWithFamily(@PathVariable Long id) {
         return ResponseEntity.ok(affiliateService.getPrimaryWithFamily(id));
+    }
+
+    @PostMapping("/lookup")
+    public ResponseEntity<List<AffiliateSummaryDto>> lookupByIds(@RequestBody List<Long> ids) {
+        return ResponseEntity.ok(affiliateService.lookupByIds(ids));
     }
 
     @PostMapping("/active-dnis")

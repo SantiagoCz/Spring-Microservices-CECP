@@ -6,6 +6,7 @@ import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
 import com.santiagocz.affiliates_service.domain.enums.Status;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
 import com.santiagocz.affiliates_service.exceptions.AffiliateConflictException;
 import com.santiagocz.affiliates_service.exceptions.AffiliateNotFoundException;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
@@ -54,7 +55,7 @@ public class AffiliateService {
             throw new AffiliateConflictException("Debe especificarse la relación con el titular");
         }
 
-        Affiliate primary = getEntityById(primaryId);
+        Affiliate primary = getAffiliateById(primaryId);
         validatePrimaryRole(primary);
         validatePrimaryNotInactive(primary);
         validateDniNotInUse(dto.getDni());
@@ -82,15 +83,22 @@ public class AffiliateService {
 
     @Transactional(readOnly = true)
     public AffiliateResponseDto getById(Long id) {
-        return mapper.toResponse(getEntityById(id));
+        return mapper.toResponse(getAffiliateById(id));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isActive(Long id) {
+        return affiliateRepository.findById(id)
+                .map(affiliate -> affiliate.getStatus() == Status.ACTIVE)
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)
     public AffiliateResponseDto getByDni(String dni) {
-        Affiliate a = affiliateRepository.findByDni(dni)
+        Affiliate affiliate = affiliateRepository.findByDni(dni)
                 .orElseThrow(() -> new AffiliateNotFoundException(
                         "No se encontró afiliado con DNI: " + dni));
-        return mapper.toResponse(a);
+        return mapper.toResponse(affiliate);
     }
 
     @Transactional(readOnly = true)
@@ -123,12 +131,24 @@ public class AffiliateService {
 
     @Transactional(readOnly = true)
     public List<AffiliateResponseDto> getFamilyGroup(Long affiliateId) {
-        Affiliate affiliate = getEntityById(affiliateId);
+        Affiliate affiliate = getAffiliateById(affiliateId);
         Long primaryId = (affiliate.getAffiliateType() == AffiliateType.PRIMARY)
                 ? affiliate.getId()
                 : affiliate.getPrimaryAffiliate().getId();
         return affiliateRepository.findFamilyGroupByPrimaryId(primaryId)
                 .stream().map(mapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AffiliateSummaryDto> lookupByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        return affiliateRepository.findAllById(ids)
+                .stream()
+                .map(mapper::toSummaryDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -143,7 +163,7 @@ public class AffiliateService {
 
     @Transactional
     public AffiliateResponseDto update(Long id, AffiliateRequestDto dto) {
-        Affiliate affiliate = getEntityById(id);
+        Affiliate affiliate = getAffiliateById(id);
 
         if (affiliate.getStatus() == Status.INACTIVE) {
             throw new AffiliateConflictException("No se puede modificar un afiliado inactivo");
@@ -172,7 +192,7 @@ public class AffiliateService {
 
     @Transactional
     public void deactivate(Long id) {
-        Affiliate affiliate = getEntityById(id);
+        Affiliate affiliate = getAffiliateById(id);
         if (affiliate.getStatus() == Status.INACTIVE) {
             throw new AffiliateConflictException("El afiliado ya está inactivo");
         }
@@ -188,7 +208,7 @@ public class AffiliateService {
 
     @Transactional
     public void activate(Long id) {
-        Affiliate affiliate = getEntityById(id);
+        Affiliate affiliate = getAffiliateById(id);
         if (affiliate.getStatus() == Status.ACTIVE) {
             throw new AffiliateConflictException("El afiliado ya está activo");
         }
@@ -201,7 +221,7 @@ public class AffiliateService {
 
     // ──────────── PRIVATES ────────────
 
-    private Affiliate getEntityById(Long id) {
+    private Affiliate getAffiliateById(Long id) {
         return affiliateRepository.findById(id)
                 .orElseThrow(() -> new AffiliateNotFoundException(
                         "No se encontró al afiliado con ID: " + id));

@@ -1,6 +1,7 @@
 package com.santiagocz.affiliates_service.component;
 
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
+import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
 import com.santiagocz.affiliates_service.dto.affiliates.PrimarySummaryDto;
 import com.santiagocz.affiliates_service.domain.entities.Affiliate;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
@@ -10,22 +11,22 @@ import org.springframework.stereotype.Component;
 public class AffiliateMapper {
 
     // Versión básica: para listados y operaciones simples
-    public AffiliateResponseDto toResponse(Affiliate a) {
-        if (a == null) return null;
+    public AffiliateResponseDto toResponse(Affiliate affiliate) {
+        if (affiliate == null) return null;
 
         AffiliateResponseDto.AffiliateResponseDtoBuilder builder = AffiliateResponseDto.builder()
-                .id(a.getId())
-                .dni(a.getDni())
-                .firstName(a.getFirstName())
-                .lastName(a.getLastName())
-                .phoneNumber(a.getPhoneNumber())
-                .birthDate(a.getBirthDate())
-                .status(a.getStatus())
-                .affiliateType(a.getAffiliateType());
+                .id(affiliate.getId())
+                .dni(affiliate.getDni())
+                .firstName(affiliate.getFirstName())
+                .lastName(affiliate.getLastName())
+                .phoneNumber(affiliate.getPhoneNumber())
+                .birthDate(affiliate.getBirthDate())
+                .status(affiliate.getStatus())
+                .affiliateType(affiliate.getAffiliateType());
 
-        if (a.getAffiliateType() == AffiliateType.DEPENDENT) {
-            builder.relation(a.getRelation());
-            builder.primaryAffiliate(toPrimarySummary(a.getPrimaryAffiliate()));
+        if (affiliate.getAffiliateType() == AffiliateType.DEPENDENT) {
+            builder.relation(affiliate.getRelation());
+            builder.primaryAffiliate(toPrimarySummary(affiliate.getPrimaryAffiliate()));
         }
 
         return builder.build();
@@ -50,6 +51,15 @@ public class AffiliateMapper {
                 .dni(primary.getDni())
                 .firstName(primary.getFirstName())
                 .lastName(primary.getLastName())
+                .build();
+    }
+
+    public AffiliateSummaryDto toSummaryDto(Affiliate affiliate) {
+        return AffiliateSummaryDto.builder()
+                .id(affiliate.getId())
+                .dni(affiliate.getDni())
+                .firstName(affiliate.getFirstName())
+                .lastName(affiliate.getLastName())
                 .build();
     }
 }
