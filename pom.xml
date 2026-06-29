@@ -33,6 +33,7 @@
         <module>AppointmentsService</module>
         <module>DentalService</module>
         <module>EmployeesService</module>
+        <module>MedicalCoverageService</module>
     </modules>
 
     <build>
