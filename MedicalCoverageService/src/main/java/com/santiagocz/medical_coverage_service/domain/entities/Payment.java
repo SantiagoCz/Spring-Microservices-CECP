@@ -35,7 +35,7 @@ public class Payment {
     @Column
     private Double discountAmount;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "medical_order_id", unique = true)
     private MedicalOrder medicalOrder;
 

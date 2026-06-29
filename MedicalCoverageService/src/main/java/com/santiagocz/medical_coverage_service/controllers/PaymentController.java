@@ -1,0 +1,76 @@
+package com.santiagocz.medical_coverage_service.controllers;
+
+import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
+import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
+import com.santiagocz.medical_coverage_service.dto.payment.PaymentResponseDto;
+import com.santiagocz.medical_coverage_service.services.PaymentService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/payments")
+@RequiredArgsConstructor
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    // ──────────── CREATE ────────────
+
+    @PostMapping
+    public ResponseEntity<PaymentResponseDto> create(@Valid @RequestBody PaymentRequestDto dto) {
+        PaymentResponseDto response = paymentService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ──────────── READ (simple) ────────────
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentResponseDto> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(paymentService.findById(id));
+    }
+
+    @GetMapping("/affiliate/{affiliateId}")
+    public ResponseEntity<List<PaymentResponseDto>> findByAffiliateId(@PathVariable Long affiliateId) {
+        return ResponseEntity.ok(paymentService.findByAffiliateId(affiliateId));
+    }
+
+    // ──────────── READ (with affiliate info) ────────────
+
+    @GetMapping
+    public ResponseEntity<List<PaymentListItemDto>> findThisMonth(
+            @RequestParam(required = false) Delegation delegation,
+            @RequestParam(required = false) Long creatorId) {
+
+        // TODO: reemplazar este filtro manual por lógica basada en el rol
+        // del usuario autenticado (SecurityContext), cuando exista AuthService
+        if (delegation != null) {
+            return ResponseEntity.ok(paymentService.findByDelegationThisMonthForListing(delegation));
+        }
+        if (creatorId != null) {
+            return ResponseEntity.ok(paymentService.findByCreatorIdThisMonthForListing(creatorId));
+        }
+        return ResponseEntity.ok(paymentService.findAllOfThisMonthForListing());
+    }
+
+    // ──────────── UPDATE ────────────
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PaymentResponseDto> update(@PathVariable Long id,
+                                                     @Valid @RequestBody PaymentRequestDto dto) {
+        return ResponseEntity.ok(paymentService.update(id, dto));
+    }
+
+    // ──────────── STATUS ────────────
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancel(@PathVariable Long id) {
+        paymentService.cancel(id);
+        return ResponseEntity.noContent().build();
+    }
+}
