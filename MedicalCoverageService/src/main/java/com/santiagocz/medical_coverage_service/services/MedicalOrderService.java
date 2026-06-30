@@ -62,7 +62,7 @@ public class MedicalOrderService {
     // ──────────── PRIVATES AND AUX METHODS ────────────
 
     private void validateNumberNotInUse(Long number) {
-        if (medicalOrderRepository.existsByNumber(number)) {
+        if (medicalOrderRepository.existsByNumberAndStatus(number, Status.ACTIVE)) {
             throw new EntityConflictException(
                     "El número de orden: " + number + " ya se encuentra registrado.");
         }

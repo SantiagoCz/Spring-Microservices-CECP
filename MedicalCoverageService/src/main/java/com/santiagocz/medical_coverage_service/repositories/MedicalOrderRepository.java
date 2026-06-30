@@ -15,5 +15,5 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Long
     Optional<MedicalOrder> findByNumberAndStatus(@Param("number") Long number,
                                                  @Param("status") Status status);
 
-    boolean existsByNumber(Long number);
+    boolean existsByNumberAndStatus(Long number, Status status);
 }
