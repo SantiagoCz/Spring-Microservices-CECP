@@ -1,6 +1,7 @@
 package com.santiagocz.medical_coverage_service.controllers;
 
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.medical_coverage_service.dto.ApiResponse;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentResponseDto;
@@ -69,8 +70,9 @@ public class PaymentController {
     // ──────────── STATUS ────────────
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancel(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> cancel(@PathVariable Long id) {
         paymentService.cancel(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Pago cancelado correctamente."));
     }
 }
