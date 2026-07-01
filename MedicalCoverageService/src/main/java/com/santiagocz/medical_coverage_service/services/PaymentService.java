@@ -6,6 +6,7 @@ import com.santiagocz.medical_coverage_service.domain.entities.Payment;
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.affiliate.AffiliateSummaryDto;
+import com.santiagocz.medical_coverage_service.dto.payment.PaymentDetailDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
 import com.santiagocz.medical_coverage_service.dto.medicalOrder.MedicalOrderResponseDto;
@@ -44,12 +45,7 @@ public class PaymentService {
         return buildResponseDto(saved);
     }
 
-    // ──────────── READ (simple) ────────────
-
-    @Transactional(readOnly = true)
-    public PaymentResponseDto findById(Long id) {
-        return buildResponseDto(getEntityById(id));
-    }
+    // ──────────── READ (simple, no affiliate) ────────────
 
     @Transactional(readOnly = true)
     public List<PaymentResponseDto> findByAffiliateId(Long affiliateId) {
@@ -59,7 +55,7 @@ public class PaymentService {
                 .toList();
     }
 
-    // ──────────── READ (with affiliate info) ────────────
+    // ──────────── READ (listing with affiliate info) ────────────
 
     @Transactional(readOnly = true)
     public List<PaymentListItemDto> findAllOfThisMonthForListing() {
@@ -77,6 +73,24 @@ public class PaymentService {
     public List<PaymentListItemDto> findByCreatorIdThisMonthForListing(Long creatorId) {
         LocalDate[] range = getMonthRange();
         return toListItems(paymentRepository.findByCreatorIdThisMonth(creatorId, range[0], range[1]));
+    }
+
+    // ──────────── READ (enriched detail with affiliate) ────────────
+
+    @Transactional(readOnly = true)
+    public PaymentDetailDto findById(Long id) {
+        Payment payment = getEntityById(id);
+        AffiliateSummaryDto affiliate = lookupSingleAffiliate(payment.getAffiliateId());
+        return buildDetailDto(payment, affiliate);
+    }
+
+    @Transactional(readOnly = true)
+    public PaymentDetailDto findByMedicalOrderNumber(Long orderNumber) {
+        Payment payment = paymentRepository.findByMedicalOrderNumber(orderNumber)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No se encontró un pago para la orden número: " + orderNumber));
+        AffiliateSummaryDto affiliate = lookupSingleAffiliate(payment.getAffiliateId());
+        return buildDetailDto(payment, affiliate);
     }
 
     // ──────────── UPDATE ────────────
@@ -132,12 +146,17 @@ public class PaymentService {
         return new LocalDate[]{startOfMonth, startOfNextMonth};
     }
 
-    // ---- Affiliates Resolution ----
-
     private void validateAffiliateIsActive(Long affiliateId) {
         if (!Boolean.TRUE.equals(affiliateClient.isActive(affiliateId))) {
             throw new EntityConflictException("El afiliado no existe o no está activo.");
         }
+    }
+
+    private AffiliateSummaryDto lookupSingleAffiliate(Long affiliateId) {
+        return affiliateClient.lookupByIds(List.of(affiliateId))
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     private List<PaymentListItemDto> toListItems(List<Payment> payments) {
@@ -204,6 +223,21 @@ public class PaymentService {
                 .build();
     }
 
+    private PaymentDetailDto buildDetailDto(Payment payment, AffiliateSummaryDto affiliate) {
+        return PaymentDetailDto.builder()
+                .id(payment.getId())
+                .date(payment.getDate())
+                .amount(payment.getAmount())
+                .discount(payment.getDiscount())
+                .discountAmount(payment.getDiscountAmount())
+                .status(payment.getStatus())
+                .affiliate(affiliate)
+                .creatorId(payment.getCreatorId())
+                .delegation(payment.getDelegation())
+                .medicalOrder(buildMedicalOrderResponseDto(payment.getMedicalOrder()))
+                .build();
+    }
+
     private PaymentListItemDto buildListItemDto(Payment payment, AffiliateSummaryDto affiliate) {
         return PaymentListItemDto.builder()
                 .id(payment.getId())
@@ -212,6 +246,8 @@ public class PaymentService {
                 .affiliateDni(affiliate != null ? affiliate.getDni() : null)
                 .affiliateFullName(affiliate != null ? affiliate.getFirstName() + " " + affiliate.getLastName() : null)
                 .amount(payment.getAmount())
+                .discount(payment.getDiscount())
+                .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .build();
     }

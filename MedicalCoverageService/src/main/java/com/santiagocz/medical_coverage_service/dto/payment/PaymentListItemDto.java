@@ -15,5 +15,7 @@ public class PaymentListItemDto {
     private String affiliateDni;
     private String affiliateFullName;
     private Double amount;
+    private Integer discount;
+    private Double discountAmount;
     private Status status;
 }

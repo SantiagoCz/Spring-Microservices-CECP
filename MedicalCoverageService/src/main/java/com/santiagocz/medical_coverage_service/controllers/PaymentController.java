@@ -2,6 +2,7 @@ package com.santiagocz.medical_coverage_service.controllers;
 
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.dto.ApiResponse;
+import com.santiagocz.medical_coverage_service.dto.payment.PaymentDetailDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentResponseDto;
@@ -29,19 +30,14 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ──────────── READ (simple) ────────────
-
-    @GetMapping("/{id}")
-    public ResponseEntity<PaymentResponseDto> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(paymentService.findById(id));
-    }
+    // ──────────── READ (simple, no affiliate) ────────────
 
     @GetMapping("/affiliate/{affiliateId}")
     public ResponseEntity<List<PaymentResponseDto>> findByAffiliateId(@PathVariable Long affiliateId) {
         return ResponseEntity.ok(paymentService.findByAffiliateId(affiliateId));
     }
 
-    // ──────────── READ (with affiliate info) ────────────
+    // ──────────── READ (listing with affiliate info) ────────────
 
     @GetMapping
     public ResponseEntity<List<PaymentListItemDto>> findThisMonth(
@@ -57,6 +53,18 @@ public class PaymentController {
             return ResponseEntity.ok(paymentService.findByCreatorIdThisMonthForListing(creatorId));
         }
         return ResponseEntity.ok(paymentService.findAllOfThisMonthForListing());
+    }
+
+    // ──────────── READ (enriched detail with affiliate) ────────────
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentDetailDto> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(paymentService.findById(id));
+    }
+
+    @GetMapping("/order/{orderNumber}")
+    public ResponseEntity<PaymentDetailDto> findByMedicalOrderNumber(@PathVariable Long orderNumber) {
+        return ResponseEntity.ok(paymentService.findByMedicalOrderNumber(orderNumber));
     }
 
     // ──────────── UPDATE ────────────
