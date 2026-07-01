@@ -58,6 +58,21 @@ public class PaymentService {
     // ──────────── READ (listing with affiliate info) ────────────
 
     @Transactional(readOnly = true)
+    public List<PaymentListItemDto> findByFilters(LocalDate startDate,
+                                                  LocalDate endDate,
+                                                  Status status,
+                                                  Delegation delegation,
+                                                  Long creatorId) {
+        // TODO: cuando exista AuthService, aplicar lógica de rol:
+        // - USER/ADMIN: forzar delegation del JWT, ignorar la del request
+        // - SUPERADMIN: usar delegation del request (null = todas)
+
+        List<Payment> payments = paymentRepository.findByFilters(
+                startDate, endDate, status, delegation, creatorId);
+        return toListItems(payments);
+    }
+
+    @Transactional(readOnly = true)
     public List<PaymentListItemDto> findAllOfThisMonthForListing() {
         LocalDate[] range = getMonthRange();
         return toListItems(paymentRepository.findAllThisMonth(range[0], range[1]));

@@ -2,6 +2,7 @@ package com.santiagocz.medical_coverage_service.repositories;
 
 import com.santiagocz.medical_coverage_service.domain.entities.Payment;
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,22 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+
+    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder " +
+            "WHERE p.affiliateId = :affiliateId ORDER BY p.date DESC")
+    List<Payment> findByAffiliateId(@Param("affiliateId") Long affiliateId);
+
+    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
+            "WHERE p.date BETWEEN :startDate AND :endDate " +
+            "AND (:status IS NULL OR mo.status = :status) " +
+            "AND (:delegation IS NULL OR p.delegation = :delegation) " +
+            "AND (:creatorId IS NULL OR p.creatorId = :creatorId) " +
+            "ORDER BY p.date DESC, mo.number ASC")
+    List<Payment> findByFilters(@Param("startDate") LocalDate startDate,
+                                @Param("endDate") LocalDate endDate,
+                                @Param("status") Status status,
+                                @Param("delegation") Delegation delegation,
+                                @Param("creatorId") Long creatorId);
 
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder " +
             "WHERE p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
@@ -34,16 +51,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                                             @Param("startOfMonth") LocalDate startOfMonth,
                                             @Param("startOfNextMonth") LocalDate startOfNextMonth);
 
-    Optional<Payment> findByMedicalOrderId(Long medicalOrderId);
-
-    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder " +
-            "WHERE p.affiliateId = :affiliateId ORDER BY p.date DESC")
-    List<Payment> findByAffiliateId(@Param("affiliateId") Long affiliateId);
-
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
             "WHERE mo.number = :orderNumber")
     Optional<Payment> findByMedicalOrderNumber(@Param("orderNumber") Long orderNumber);
-
-    @Query("SELECT p FROM Payment p WHERE p.date = :date ORDER BY p.date DESC")
-    List<Payment> findByDate(@Param("date") LocalDate date);
 }

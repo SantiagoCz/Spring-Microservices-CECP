@@ -1,6 +1,7 @@
 package com.santiagocz.medical_coverage_service.controllers;
 
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.ApiResponse;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentDetailDto;
 import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -38,6 +40,22 @@ public class PaymentController {
     }
 
     // ──────────── READ (listing with affiliate info) ────────────
+
+    @GetMapping("/search")
+    public ResponseEntity<List<PaymentListItemDto>> search(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) Delegation delegation,
+            @RequestParam(required = false) Long creatorId) {
+
+        // TODO: cuando exista AuthService:
+        // - Si rol es USER o ADMIN: ignorar delegation del request,
+        //   forzar delegation del JWT
+        // - Si rol es SUPERADMIN: usar delegation del request (puede ser null = todas)
+        return ResponseEntity.ok(paymentService.findByFilters(
+                startDate, endDate, status, delegation, creatorId));
+    }
 
     @GetMapping
     public ResponseEntity<List<PaymentListItemDto>> findThisMonth(
