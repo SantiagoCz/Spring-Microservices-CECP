@@ -19,7 +19,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
             "WHERE p.date BETWEEN :startDate AND :endDate " +
-            "AND (:status IS NULL OR mo.status = :status) " +
+            "AND (:status IS NULL OR p.status = :status) " +
             "AND (:delegation IS NULL OR p.delegation = :delegation) " +
             "AND (:creatorId IS NULL OR p.creatorId = :creatorId) " +
             "ORDER BY p.date DESC, mo.number ASC")
