@@ -26,23 +26,7 @@ public class MedicalOrderService {
                 .build();
     }
 
-    // ──────────── READ ────────────
-
-    @Transactional(readOnly = true)
-    public MedicalOrder getById(Long id) {
-        return medicalOrderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "No se encontró la orden médica con ID: " + id));
-    }
-
-    @Transactional(readOnly = true)
-    public MedicalOrder getActiveByNumber(Long number) {
-        return medicalOrderRepository.findByNumberAndStatus(number, Status.ACTIVE)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "No se encontró una orden médica activa con número: " + number));
-    }
-
-    // ──────────── UPDATE (internal use with PaymentService) ────────────
+    // ──────────── UPDATE ────────────
 
     void update(MedicalOrder medicalOrder, MedicalOrderRequestDto dto, Delegation delegation) {
         validateNumberChangeIsAvailable(medicalOrder, dto.getNumber(), delegation);
