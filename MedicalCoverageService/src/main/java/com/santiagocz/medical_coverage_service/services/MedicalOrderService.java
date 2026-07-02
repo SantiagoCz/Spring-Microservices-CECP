@@ -1,14 +1,13 @@
 package com.santiagocz.medical_coverage_service.services;
 
 import com.santiagocz.medical_coverage_service.domain.entities.MedicalOrder;
+import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.medicalOrder.MedicalOrderRequestDto;
 import com.santiagocz.medical_coverage_service.exceptions.EntityConflictException;
-import com.santiagocz.medical_coverage_service.exceptions.EntityNotFoundException;
 import com.santiagocz.medical_coverage_service.repositories.MedicalOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +17,8 @@ public class MedicalOrderService {
 
     // ──────────── CREATE ────────────
 
-    MedicalOrder buildAndValidate(MedicalOrderRequestDto dto) {
-        validateNumberNotInUse(dto.getNumber());
-
+    MedicalOrder buildAndValidate(MedicalOrderRequestDto dto, Delegation delegation) {
+        validateNumberNotInUse(dto.getNumber(), delegation);
         return MedicalOrder.builder()
                 .number(dto.getNumber())
                 .medicalOrderType(dto.getMedicalOrderType())
@@ -46,9 +44,8 @@ public class MedicalOrderService {
 
     // ──────────── UPDATE (internal use with PaymentService) ────────────
 
-    void update(MedicalOrder medicalOrder, MedicalOrderRequestDto dto) {
-        validateNumberChangeIsAvailable(medicalOrder, dto.getNumber());
-
+    void update(MedicalOrder medicalOrder, MedicalOrderRequestDto dto, Delegation delegation) {
+        validateNumberChangeIsAvailable(medicalOrder, dto.getNumber(), delegation);
         medicalOrder.setNumber(dto.getNumber());
         medicalOrder.setMedicalOrderType(dto.getMedicalOrderType());
     }
@@ -61,18 +58,20 @@ public class MedicalOrderService {
 
     // ──────────── PRIVATES AND AUX METHODS ────────────
 
-    private void validateNumberNotInUse(Long number) {
-        if (medicalOrderRepository.existsByNumberAndStatus(number, Status.ACTIVE)) {
+    private void validateNumberNotInUse(Long number, Delegation delegation) {
+        if (medicalOrderRepository.existsByNumberAndStatusAndDelegation(
+                number, Status.ACTIVE, delegation)) {
             throw new EntityConflictException(
                     "El número de orden: " + number + " ya se encuentra registrado.");
         }
     }
 
-    private void validateNumberChangeIsAvailable(MedicalOrder medicalOrder, Long newNumber) {
+    private void validateNumberChangeIsAvailable(MedicalOrder medicalOrder,
+                                                 Long newNumber,
+                                                 Delegation delegation) {
         boolean numberIsChanging = !medicalOrder.getNumber().equals(newNumber);
-
         if (numberIsChanging) {
-            validateNumberNotInUse(newNumber);
+            validateNumberNotInUse(newNumber, delegation);
         }
     }
 }

@@ -6,11 +6,8 @@ import com.santiagocz.medical_coverage_service.domain.entities.Payment;
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.affiliate.AffiliateSummaryDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentDetailDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
+import com.santiagocz.medical_coverage_service.dto.payment.*;
 import com.santiagocz.medical_coverage_service.dto.medicalOrder.MedicalOrderResponseDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentResponseDto;
 import com.santiagocz.medical_coverage_service.exceptions.EntityConflictException;
 import com.santiagocz.medical_coverage_service.exceptions.EntityNotFoundException;
 import com.santiagocz.medical_coverage_service.repositories.PaymentRepository;
@@ -37,7 +34,9 @@ public class PaymentService {
     public PaymentResponseDto create(PaymentRequestDto dto) {
         validateAffiliateIsActive(dto.getAffiliateId());
 
-        MedicalOrder medicalOrder = medicalOrderService.buildAndValidate(dto.getMedicalOrderDto());
+
+        MedicalOrder medicalOrder = medicalOrderService.buildAndValidate(
+                dto.getMedicalOrderDto(), dto.getDelegation());
         Payment payment = buildPayment(dto, medicalOrder);
 
         Payment saved = paymentRepository.save(payment);
@@ -111,13 +110,13 @@ public class PaymentService {
     // ──────────── UPDATE ────────────
 
     @Transactional
-    public PaymentResponseDto update(Long paymentId, PaymentRequestDto dto) {
+    public PaymentResponseDto update(Long paymentId, PaymentUpdateDto dto) {
         Payment payment = getEntityById(paymentId);
         validateIsActive(payment);
 
         // TODO: validar período de edición (30 días) cuando exista AuthService con roles
 
-        medicalOrderService.update(payment.getMedicalOrder(), dto.getMedicalOrderDto());
+        medicalOrderService.update(payment.getMedicalOrder(), dto.getMedicalOrderDto(), payment.getDelegation());
 
         payment.setDate(dto.getDate());
         payment.setAmount(dto.getAmount());

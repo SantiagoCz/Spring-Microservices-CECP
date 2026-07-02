@@ -3,10 +3,7 @@ package com.santiagocz.medical_coverage_service.controllers;
 import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.ApiResponse;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentDetailDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentListItemDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentRequestDto;
-import com.santiagocz.medical_coverage_service.dto.payment.PaymentResponseDto;
+import com.santiagocz.medical_coverage_service.dto.payment.*;
 import com.santiagocz.medical_coverage_service.services.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -89,7 +86,7 @@ public class PaymentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<PaymentResponseDto> update(@PathVariable Long id,
-                                                     @Valid @RequestBody PaymentRequestDto dto) {
+                                                     @Valid @RequestBody PaymentUpdateDto dto) {
         return ResponseEntity.ok(paymentService.update(id, dto));
     }
 
