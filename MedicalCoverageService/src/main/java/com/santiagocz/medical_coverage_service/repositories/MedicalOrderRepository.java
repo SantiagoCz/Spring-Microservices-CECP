@@ -7,14 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
-
 public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Long> {
-
-    @Query("SELECT m FROM MedicalOrder m LEFT JOIN FETCH m.payment p " +
-            "WHERE m.number = :number AND m.status = :status")
-    Optional<MedicalOrder> findByNumberAndStatus(@Param("number") Long number,
-                                                 @Param("status") Status status);
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END " +
             "FROM MedicalOrder m JOIN m.payment p " +
@@ -23,4 +16,5 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Long
             "AND p.delegation = :delegation")
     boolean existsByNumberAndStatusAndDelegation(@Param("number") Long number,
                                                  @Param("status") Status status,
-                                                 @Param("delegation") Delegation delegation);}
+                                                 @Param("delegation") Delegation delegation);
+}
