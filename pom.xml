@@ -25,6 +25,7 @@
     </properties>
 
     <modules>
+        <module>AuthService</module>
         <module>ApiGateway</module>
         <module>ConfigServer</module>
         <module>EurekaServer</module>
