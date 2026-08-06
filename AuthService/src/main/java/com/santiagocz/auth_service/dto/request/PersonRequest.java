@@ -25,7 +25,7 @@ public class PersonRequest {
     @Size(max = 50, message = "El apellido no puede superar los 50 caracteres")
     private String lastName;
 
-    @Pattern(regexp = "^(\\d{9,12})?$", message = "El teléfono debe tener entre 9 y 12 dígitos", allowBlank = true)
+    @Pattern(regexp = "^(\\d{9,12})?$", message = "El teléfono debe tener entre 9 y 12 dígitos")
     private String phoneNumber;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria")
