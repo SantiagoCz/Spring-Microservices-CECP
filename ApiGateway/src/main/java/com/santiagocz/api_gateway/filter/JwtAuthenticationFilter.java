@@ -21,10 +21,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private final JwtService jwtService;
 
     private static final List<String> PUBLIC_ROUTES = List.of(
-            "/auth/login",
-            "/auth/register",
-            "/auth/refresh",
-            "/auth/validate",
+            "/auth-service/auth/login",
+            "/auth-service/auth/register",
+            "/auth-service/auth/refresh",
+            "/auth-service/auth/validate",
             "/actuator"
     );
 
@@ -79,6 +79,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1;  // Ejecutar primero
+        return -1;  // Ejecuta primero
     }
 }
