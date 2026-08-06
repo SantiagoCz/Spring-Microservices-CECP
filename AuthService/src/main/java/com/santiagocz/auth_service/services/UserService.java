@@ -6,6 +6,7 @@ import com.santiagocz.auth_service.domain.entities.User;
 import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
+import com.santiagocz.auth_service.exceptions.UserAlreadyExistsException;
 import com.santiagocz.auth_service.repositories.PersonRepository;
 import com.santiagocz.auth_service.repositories.SubRoleRepository;
 import com.santiagocz.auth_service.repositories.UserRepository;
@@ -29,7 +30,7 @@ public class UserService {
     public User registerUser(RegisterRequest request) {
         // Verificar si el DNI ya existe
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("El usuario con DNI " + request.getUsername() + " ya existe");
+            throw new UserAlreadyExistsException("El usuario con DNI " + request.getUsername() + " ya existe");
         }
 
         if (personRepository.existsByDni(request.getUsername())) {

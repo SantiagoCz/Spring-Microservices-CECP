@@ -5,6 +5,7 @@ import com.santiagocz.auth_service.dto.request.LoginRequest;
 import com.santiagocz.auth_service.dto.response.AuthResponse;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
 import com.santiagocz.auth_service.dto.response.TokenResponse;
+import com.santiagocz.auth_service.exceptions.InvalidCredentialsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,7 +50,7 @@ public class AuthService {
                     .build();
 
         } catch (AuthenticationException e) {
-            throw new IllegalArgumentException("DNI o contraseña incorrectos", e);
+            throw new InvalidCredentialsException("DNI o contraseña incorrectos");
         }
     }
 
