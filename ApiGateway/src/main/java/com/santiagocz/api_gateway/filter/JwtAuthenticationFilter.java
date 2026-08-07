@@ -1,7 +1,10 @@
 package com.santiagocz.api_gateway.filter;
 
 import com.santiagocz.api_gateway.services.JwtService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -16,9 +19,13 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtService jwtService;
+
+    @Value("${internal.secret}")
+    private String internalSecret;
 
     private static final List<String> PUBLIC_ROUTES = List.of(
             "/auth-service/auth/login",
@@ -43,11 +50,18 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             if (token != null && jwtService.isTokenValid(token)) {
                 String username = jwtService.extractUsername(token);
 
+                // ← AGREGAR: Extraer roles del token
+                Claims claims = jwtService.extractAllClaims(token);
+                String roles = (String) claims.get("roles");
+
+                log.info("Gateway: Usuario {} con roles: {}", username, roles);
+
                 // Inyectar headers para que los microservicios los lean
                 ServerWebExchange mutatedExchange = exchange.mutate()
                         .request(r -> r
                                 .header("X-User-Name", username)
-                                .header("X-Internal-Secret", "tu-secreto-interno")
+                                .header("X-User-Roles", roles != null ? roles : "")  // ← AGREGAR
+                                .header("X-Internal-Secret", internalSecret)  // ← USAR CONFIG
                         )
                         .build();
 
@@ -58,6 +72,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             }
 
         } catch (Exception e) {
+            log.error("Error en JWT filter: ", e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
