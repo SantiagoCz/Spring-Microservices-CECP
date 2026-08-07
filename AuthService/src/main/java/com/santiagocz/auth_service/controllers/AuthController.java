@@ -3,6 +3,7 @@ package com.santiagocz.auth_service.controllers;
 import com.santiagocz.auth_service.dto.request.LoginRequest;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.response.ApiResponse;
+import com.santiagocz.auth_service.dto.response.RegisterResponse;
 import com.santiagocz.auth_service.services.AuthService;
 import com.santiagocz.auth_service.services.UserService;
 import jakarta.validation.Valid;
@@ -27,9 +28,10 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
-        var user = userService.registerUser(request);
+        RegisterResponse response = userService.registerUser(request);
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse(201, "Usuario registrado exitosamente", user));
+                .body(new ApiResponse(201, "Usuario registrado exitosamente", response));
     }
 
     @PostMapping("/refresh")
