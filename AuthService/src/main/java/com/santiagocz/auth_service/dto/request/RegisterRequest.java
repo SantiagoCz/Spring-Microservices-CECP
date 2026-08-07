@@ -15,16 +15,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegisterRequest {
 
-    @NotBlank(message = "El DNI es obligatorio")
-    private String username;
+    @NotNull(message = "Los datos de la persona son obligatorios")
+    @Valid
+    private PersonRequest person;
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 4, message = "La contraseña debe tener al menos 4 caracteres") //TODO: despues modificaremos el patrón de la contraseña
     private String password;
-
-    @NotNull(message = "Los datos de la persona son obligatorios")
-    @Valid
-    private PersonRequest person;
 
     @NotNull(message = "El rol jerárquico es obligatorio")
     private String hierarchyRole;
