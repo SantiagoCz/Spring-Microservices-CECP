@@ -52,12 +52,14 @@ public class User implements UserDetails {
     @JoinColumn(name = "person_id", unique = true)
     private Person person;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+    @Column(name = "created_by")
+    private String createdBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
