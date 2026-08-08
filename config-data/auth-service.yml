@@ -25,5 +25,5 @@ eureka:
 
 jwt:
   secret: A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v2W3x4Y5z6A7b8C9d0E1f2G3==
-  expiration: 3600000
+  expiration: 900000
   refresh-expiration: 86400000
