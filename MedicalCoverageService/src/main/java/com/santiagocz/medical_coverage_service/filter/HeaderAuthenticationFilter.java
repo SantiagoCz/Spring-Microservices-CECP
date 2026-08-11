@@ -14,13 +14,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final String USER_HEADER = "X-User-Name";
+    private static final String ROLES_HEADER = "X-User-Roles";
+    private static final String SECRET_HEADER = "X-Internal-Secret";
 
     @Value("${internal.secret}")
     private String internalSecret;
@@ -32,54 +36,36 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         try {
-            String username = request.getHeader("X-User-Name");
-            String rolesHeader = request.getHeader("X-User-Roles");
-            String internalSecretHeader = request.getHeader("X-Internal-Secret");
+            String username = request.getHeader(USER_HEADER);
+            String rolesHeader = request.getHeader(ROLES_HEADER);
+            String secret = request.getHeader(SECRET_HEADER);
 
-            log.info("=== HeaderAuthenticationFilter ===");
-            log.info("X-User-Name: {}", username);
-            log.info("X-User-Roles: {}", rolesHeader);
-            log.info("X-Internal-Secret: {}", internalSecretHeader != null ? "✓ present" : "✗ missing");
-            log.info("internal.secret config: {}", internalSecret);
-
-            if (username != null && internalSecretHeader != null) {
-
-                if (!internalSecretHeader.equals(internalSecret)) {
-                    log.warn("Internal secret NO coincide!");
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-
-                log.info("✓ Internal secret coincide");
+            if (username != null && secret != null && secret.equals(internalSecret)) {
 
                 // TODO: Validar que el usuario no esté eliminado
 
-                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                if (rolesHeader != null && !rolesHeader.isEmpty()) {
-                    String[] roles = rolesHeader.split(",");
-                    for (String role : roles) {
-                        String trimmedRole = role.trim();
-                        authorities.add(new SimpleGrantedAuthority(trimmedRole));
-                        log.info("  Added authority: {}", trimmedRole);
-                    }
-                }
-
+                List<SimpleGrantedAuthority> authorities = parseAuthorities(rolesHeader);
                 UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                authorities
-                        );
-
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                log.info("✓ Usuario {} autenticado con {} authorities", username, authorities.size());
-            } else {
-                log.warn("Falta X-User-Name o X-Internal-Secret");
+            } else if (username != null && secret != null) {
+                log.warn("Invalid internal secret for user: {}", username);
             }
         } catch (Exception e) {
-            log.error("Error en HeaderAuthenticationFilter: ", e);
+            log.error("Error processing authentication headers", e);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private List<SimpleGrantedAuthority> parseAuthorities(String rolesHeader) {
+        if (rolesHeader == null || rolesHeader.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(rolesHeader.split(","))
+                .map(String::trim)
+                .filter(role -> !role.isEmpty())
+                .map(SimpleGrantedAuthority::new)
+                .toList();
     }
 }
