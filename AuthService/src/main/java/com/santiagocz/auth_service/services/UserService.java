@@ -8,6 +8,7 @@ import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
 import com.santiagocz.auth_service.dto.response.RegisterResponse;
 import com.santiagocz.auth_service.exceptions.UserAlreadyExistsException;
+import com.santiagocz.auth_service.exceptions.UserNotFoundException;
 import com.santiagocz.auth_service.repositories.PersonRepository;
 import com.santiagocz.auth_service.repositories.SubRoleRepository;
 import com.santiagocz.auth_service.repositories.UserRepository;
@@ -17,6 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
@@ -69,7 +72,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + username));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado: " + username));
     }
 
     @Transactional(readOnly = true)
@@ -87,12 +90,12 @@ public class UserService {
                 .build();
     }
 
-    // ──────────── UPDATE ────────────
+    // ──────────── UPDATE - SUBROLES ────────────
 
     @Transactional
     public void addSubrolToUser(Long userId, String subrolName) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
         SubRole subRole = subRoleRepository.findByName(subrolName)
                 .orElseThrow(() -> new IllegalArgumentException("Subrol no encontrado: " + subrolName));
@@ -104,12 +107,38 @@ public class UserService {
     @Transactional
     public void removeSubrolFromUser(Long userId, String subrolName) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
         SubRole subRole = subRoleRepository.findByName(subrolName)
                 .orElseThrow(() -> new IllegalArgumentException("Subrol no encontrado: " + subrolName));
 
         user.getSubroles().remove(subRole);
+        userRepository.save(user);
+    }
+
+    // ──────────── DELETE - RESTORE ────────────
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
+
+        user.setEnabled(false);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setDeletedBy(getAuthenticatedUsername());
+        user.setUpdatedBy(getAuthenticatedUsername());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void restoreUser(Long id) {
+        User user = userRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
+
+        user.setEnabled(true);
+        user.setDeletedAt(null);
+        user.setDeletedBy(null);
+        user.setUpdatedBy(getAuthenticatedUsername());
         userRepository.save(user);
     }
 
