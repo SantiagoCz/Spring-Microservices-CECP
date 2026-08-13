@@ -7,9 +7,9 @@ import com.santiagocz.affiliates_service.domain.enums.Status;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
-import com.santiagocz.affiliates_service.exceptions.AffiliateConflictException;
-import com.santiagocz.affiliates_service.exceptions.AffiliateNotFoundException;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +52,7 @@ public class AffiliateService {
     @Transactional
     public AffiliateResponseDto createDependent(Long primaryId, AffiliateRequestDto dto) {
         if (dto.getRelation() == null) {
-            throw new AffiliateConflictException("Debe especificarse la relación con el titular");
+            throw new EntityConflictException("Debe especificarse la relación con el titular");
         }
 
         Affiliate primary = getAffiliateById(primaryId);
@@ -96,7 +96,7 @@ public class AffiliateService {
     @Transactional(readOnly = true)
     public AffiliateResponseDto getByDni(String dni) {
         Affiliate affiliate = affiliateRepository.findByDni(dni)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró afiliado con DNI: " + dni));
         return mapper.toResponse(affiliate);
     }
@@ -124,7 +124,7 @@ public class AffiliateService {
     @Transactional(readOnly = true)
     public AffiliateResponseDto getPrimaryWithFamily(Long primaryId) {
         Affiliate primary = affiliateRepository.findPrimaryWithFamilyById(primaryId)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró titular con ID: " + primaryId));
         return mapper.toResponseWithFamily(primary);
     }
@@ -166,7 +166,7 @@ public class AffiliateService {
         Affiliate affiliate = getAffiliateById(id);
 
         if (affiliate.getStatus() == Status.INACTIVE) {
-            throw new AffiliateConflictException("No se puede modificar un afiliado inactivo");
+            throw new EntityConflictException("No se puede modificar un afiliado inactivo");
         }
         if (affiliate.getAffiliateType() == AffiliateType.PRIMARY) {
             validateAdult(dto.getBirthDate());
@@ -194,7 +194,7 @@ public class AffiliateService {
     public void deactivate(Long id) {
         Affiliate affiliate = getAffiliateById(id);
         if (affiliate.getStatus() == Status.INACTIVE) {
-            throw new AffiliateConflictException("El afiliado ya está inactivo");
+            throw new EntityConflictException("El afiliado ya está inactivo");
         }
         affiliate.setStatus(Status.INACTIVE);
 
@@ -210,11 +210,11 @@ public class AffiliateService {
     public void activate(Long id) {
         Affiliate affiliate = getAffiliateById(id);
         if (affiliate.getStatus() == Status.ACTIVE) {
-            throw new AffiliateConflictException("El afiliado ya está activo");
+            throw new EntityConflictException("El afiliado ya está activo");
         }
         if (affiliate.getAffiliateType() == AffiliateType.DEPENDENT
                 && affiliate.getPrimaryAffiliate().getStatus() == Status.INACTIVE) {
-            throw new AffiliateConflictException("Primero debe darse de alta al titular");
+            throw new EntityConflictException("Primero debe darse de alta al titular");
         }
         affiliate.setStatus(Status.ACTIVE);
     }
@@ -223,32 +223,32 @@ public class AffiliateService {
 
     private Affiliate getAffiliateById(Long id) {
         return affiliateRepository.findById(id)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró al afiliado con ID: " + id));
     }
 
     private void validateDniNotInUse(String dni) {
         if (affiliateRepository.existsByDni(dni)) {
-            throw new AffiliateConflictException("Ya existe un afiliado con el DNI: " + dni);
+            throw new EntityConflictException("Ya existe un afiliado con el DNI: " + dni);
         }
     }
 
     private void validateAdult(LocalDate birthDate) {
         if (Period.between(birthDate, LocalDate.now()).getYears() < 18) {
-            throw new AffiliateConflictException("El afiliado titular debe ser mayor de edad");
+            throw new EntityConflictException("El afiliado titular debe ser mayor de edad");
         }
     }
 
     private void validatePrimaryRole(Affiliate affiliate) {
         if (affiliate.getAffiliateType() != AffiliateType.PRIMARY) {
-            throw new AffiliateConflictException(
+            throw new EntityConflictException(
                     "El afiliado ID " + affiliate.getId() + " no es titular");
         }
     }
 
     private void validatePrimaryNotInactive(Affiliate primary) {
         if (primary.getStatus() == Status.INACTIVE) {
-            throw new AffiliateConflictException(
+            throw new EntityConflictException(
                     "El titular está inactivo, no se puede agregar grupo familiar");
         }
     }

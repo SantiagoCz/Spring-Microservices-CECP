@@ -8,8 +8,8 @@ import com.santiagocz.affiliates_service.domain.entities.Payslip;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
 import com.santiagocz.affiliates_service.repositories.PayslipRepository;
-import com.santiagocz.affiliates_service.exceptions.AffiliateConflictException;
-import com.santiagocz.affiliates_service.exceptions.AffiliateNotFoundException;
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ public class PayslipService {
         Affiliate primary = resolvePrimary(dto.getAffiliateId());
 
         if (payslipRepository.existsByPrimaryAffiliate_IdAndPeriod(primary.getId(), dto.getPeriod())) {
-            throw new AffiliateConflictException(
+            throw new EntityConflictException(
                     "Ya existe un recibo para el período " + dto.getPeriod() + " del titular");
         }
 
@@ -65,7 +65,7 @@ public class PayslipService {
         return payslipRepository
                 .findTopByPrimaryAffiliate_IdOrderByPeriodDesc(primary.getId())
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "No hay recibos cargados para el titular ID " + primary.getId()));
     }
 
@@ -95,13 +95,13 @@ public class PayslipService {
 
     private Payslip getEntityById(Long id) {
         return payslipRepository.findById(id)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "Recibo no encontrado con ID: " + id));
     }
 
     private Affiliate resolvePrimary(Long affiliateId) {
         Affiliate affiliate = affiliateRepository.findById(affiliateId)
-                .orElseThrow(() -> new AffiliateNotFoundException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró el afiliado con ID: " + affiliateId));
 
         return (affiliate.getAffiliateType() == AffiliateType.PRIMARY)

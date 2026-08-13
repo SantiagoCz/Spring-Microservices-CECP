@@ -1,9 +1,9 @@
 package com.santiagocz.affiliates_service.controllers;
 
-import com.santiagocz.affiliates_service.dto.ApiResponse;
 import com.santiagocz.affiliates_service.dto.paylips.PayslipRequestDto;
 import com.santiagocz.affiliates_service.dto.paylips.PayslipResponseDto;
 import com.santiagocz.affiliates_service.services.PayslipService;
+import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
