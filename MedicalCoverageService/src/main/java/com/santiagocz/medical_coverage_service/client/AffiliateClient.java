@@ -1,6 +1,6 @@
 package com.santiagocz.medical_coverage_service.client;
 
-import com.santiagocz.medical_coverage_service.config.FeignClientConfig;
+import com.santiagocz.common.config.FeignClientConfig;
 import com.santiagocz.medical_coverage_service.dto.affiliate.AffiliateSummaryDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

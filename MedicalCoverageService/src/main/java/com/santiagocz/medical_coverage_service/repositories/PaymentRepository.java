@@ -1,7 +1,7 @@
 package com.santiagocz.medical_coverage_service.repositories;
 
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.medical_coverage_service.domain.entities.Payment;
-import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

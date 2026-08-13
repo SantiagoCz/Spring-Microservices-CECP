@@ -1,8 +1,8 @@
 package com.santiagocz.medical_coverage_service.controllers;
 
-import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.common.delegation.Delegation;
+import com.santiagocz.common.dto.ApiResponse;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
-import com.santiagocz.medical_coverage_service.dto.ApiResponse;
 import com.santiagocz.medical_coverage_service.dto.payment.*;
 import com.santiagocz.medical_coverage_service.services.PaymentService;
 import jakarta.validation.Valid;

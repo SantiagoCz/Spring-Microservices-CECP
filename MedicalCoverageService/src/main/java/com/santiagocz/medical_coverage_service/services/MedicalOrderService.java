@@ -1,10 +1,10 @@
 package com.santiagocz.medical_coverage_service.services;
 
+import com.santiagocz.common.delegation.Delegation;
+import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.medical_coverage_service.domain.entities.MedicalOrder;
-import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.medicalOrder.MedicalOrderRequestDto;
-import com.santiagocz.medical_coverage_service.exceptions.EntityConflictException;
 import com.santiagocz.medical_coverage_service.repositories.MedicalOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

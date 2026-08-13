@@ -1,6 +1,6 @@
 package com.santiagocz.medical_coverage_service.dto.payment;
 
-import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import com.santiagocz.medical_coverage_service.dto.medicalOrder.MedicalOrderResponseDto;
 import lombok.Builder;

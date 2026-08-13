@@ -1,6 +1,6 @@
 package com.santiagocz.medical_coverage_service.domain.entities;
 
-import com.santiagocz.medical_coverage_service.domain.enums.Delegation;
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
