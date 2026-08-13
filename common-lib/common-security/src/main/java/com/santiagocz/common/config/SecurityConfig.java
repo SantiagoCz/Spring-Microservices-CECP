@@ -1,6 +1,6 @@
-package com.santiagocz.medical_coverage_service.config;
+package com.santiagocz.common.config;
 
-import com.santiagocz.medical_coverage_service.filter.HeaderAuthenticationFilter;
+import com.santiagocz.common.filter.HeaderAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,21 +14,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final HeaderAuthenticationFilter headerAuthenticationFilter;
-
-    public SecurityConfig(HeaderAuthenticationFilter headerAuthenticationFilter) {
-        this.headerAuthenticationFilter = headerAuthenticationFilter;
+    @Bean
+    public HeaderAuthenticationFilter headerAuthenticationFilter() {
+        return new HeaderAuthenticationFilter();
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           HeaderAuthenticationFilter headerAuthenticationFilter) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())  // Stateless JWT
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().authenticated()  // Todos los requests requieren autenticación
-                )
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

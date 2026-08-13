@@ -1,4 +1,4 @@
-package com.santiagocz.medical_coverage_service.exceptions;
+package com.santiagocz.common.exceptions;
 
 public class EntityNotFoundException extends RuntimeException {
     public EntityNotFoundException(String message) {

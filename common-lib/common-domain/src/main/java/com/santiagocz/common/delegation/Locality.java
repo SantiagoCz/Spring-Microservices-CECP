@@ -1,4 +1,4 @@
-package com.santiagocz.medical_coverage_service.domain.enums;
+package com.santiagocz.common.delegation;
 
 public enum Locality {
     APOSTOLES,

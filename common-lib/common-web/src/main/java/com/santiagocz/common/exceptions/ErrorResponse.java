@@ -1,4 +1,4 @@
-package com.santiagocz.affiliates_service.exceptions;
+package com.santiagocz.common.exceptions;
 
 import java.time.LocalDateTime;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.santiagocz.medical_coverage_service.exceptions;
+package com.santiagocz.common.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +9,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,20 +59,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception on {} {}: {}",
-                request.getMethod(),
-                request.getRequestURI(),
-                ex.getMessage(), ex);
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(
-                        LocalDateTime.now(),
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "Internal Server Error",
-                        "Error interno del servidor.",
-                        request.getRequestURI(),
-                        null));
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex,
+                                                       HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                "Ocurrió un error inesperado",
+                request.getRequestURI()
+        );
+        return ResponseEntity.internalServerError().body(body);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -1,4 +1,4 @@
-package com.santiagocz.medical_coverage_service.exceptions;
+package com.santiagocz.common.exceptions;
 
 public class EntityConflictException extends RuntimeException {
     public EntityConflictException(String message) {

@@ -1,4 +1,4 @@
-package com.santiagocz.affiliates_service.dto;
+package com.santiagocz.common.dto;
 
 public record ApiResponse(int status, String message) {
 }

@@ -25,6 +25,8 @@
     </properties>
 
     <modules>
+        <module>common-lib</module>
+
         <module>AuthService</module>
         <module>ApiGateway</module>
         <module>ConfigServer</module>
