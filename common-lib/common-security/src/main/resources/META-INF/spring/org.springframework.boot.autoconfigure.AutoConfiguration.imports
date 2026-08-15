@@ -1,0 +1,2 @@
+# Configuración de seguridad basada en headers internos
+com.santiagocz.common.config.SecurityConfig

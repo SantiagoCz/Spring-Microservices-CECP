@@ -1,0 +1,2 @@
+# Configuración de manejador de excepciones
+com.santiagocz.common.exceptions.GlobalExceptionHandler
