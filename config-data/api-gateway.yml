@@ -11,7 +11,9 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/auth/**
+            - Path=/auth-service/**
+          filters:
+            - StripPrefix=1
 
         # Affiliates Service
         - id: affiliate-service
