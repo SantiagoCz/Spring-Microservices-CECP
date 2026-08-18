@@ -72,3 +72,12 @@ jwt:
 
 internal:
   secret: ${INTERNAL_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
