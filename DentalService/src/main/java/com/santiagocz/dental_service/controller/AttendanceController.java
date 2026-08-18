@@ -1,6 +1,6 @@
 package com.santiagocz.dental_service.controller;
 
-import com.santiagocz.dental_service.dto.ApiResponse;
+import com.santiagocz.common.dto.ApiResponse;
 import com.santiagocz.dental_service.dto.attendance.AttendanceRequestDto;
 import com.santiagocz.dental_service.dto.attendance.AttendanceResponseDto;
 import com.santiagocz.dental_service.services.AttendanceService;
@@ -8,11 +8,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/attendances")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('SUB_ODONTOLOGY_CLERK')")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;

@@ -1,11 +1,11 @@
 package com.santiagocz.dental_service.services;
 
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.domain.entities.PriceList;
 import com.santiagocz.dental_service.domain.entities.Professional;
 import com.santiagocz.dental_service.dto.priceList.PriceListResponseDto;
 import com.santiagocz.dental_service.dto.professional.ProfessionalRequestDto;
 import com.santiagocz.dental_service.dto.professional.ProfessionalResponseDto;
-import com.santiagocz.dental_service.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.repositories.ProfessionalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

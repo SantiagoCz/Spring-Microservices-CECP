@@ -1,5 +1,7 @@
 package com.santiagocz.dental_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.domain.entities.Attendance;
 import com.santiagocz.dental_service.domain.entities.AttendanceItem;
 import com.santiagocz.dental_service.domain.entities.CommissionPrice;
@@ -7,8 +9,6 @@ import com.santiagocz.dental_service.domain.entities.Professional;
 import com.santiagocz.dental_service.dto.liquidation.LiquidationItemResponseDto;
 import com.santiagocz.dental_service.dto.liquidation.LiquidationRequestDto;
 import com.santiagocz.dental_service.dto.liquidation.LiquidationResponseDto;
-import com.santiagocz.dental_service.exceptions.EntityConflictException;
-import com.santiagocz.dental_service.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.repositories.AttendanceRepository;
 import com.santiagocz.dental_service.repositories.CommissionPriceRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.santiagocz.dental_service.controller;
 
-import com.santiagocz.dental_service.dto.ApiResponse;
+import com.santiagocz.common.dto.ApiResponse;
 import com.santiagocz.dental_service.dto.commissionPrice.CommissionPriceRequestDto;
 import com.santiagocz.dental_service.dto.commissionPrice.CommissionPriceResponseDto;
 import com.santiagocz.dental_service.services.CommissionPriceService;

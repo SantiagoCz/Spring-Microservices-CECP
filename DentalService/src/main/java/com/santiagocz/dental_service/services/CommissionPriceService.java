@@ -1,5 +1,7 @@
 package com.santiagocz.dental_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.domain.entities.Code;
 import com.santiagocz.dental_service.domain.entities.CommissionPrice;
 import com.santiagocz.dental_service.domain.entities.PriceList;
@@ -7,8 +9,6 @@ import com.santiagocz.dental_service.dto.code.CodeResponseDto;
 import com.santiagocz.dental_service.dto.commissionPrice.CommissionPriceRequestDto;
 import com.santiagocz.dental_service.dto.commissionPrice.CommissionPriceResponseDto;
 import com.santiagocz.dental_service.dto.priceList.PriceListResponseDto;
-import com.santiagocz.dental_service.exceptions.EntityConflictException;
-import com.santiagocz.dental_service.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.repositories.CommissionPriceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

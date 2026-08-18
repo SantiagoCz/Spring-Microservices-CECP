@@ -1,5 +1,7 @@
 package com.santiagocz.dental_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.domain.entities.Attendance;
 import com.santiagocz.dental_service.domain.entities.AttendanceItem;
 import com.santiagocz.dental_service.domain.entities.Code;
@@ -9,8 +11,6 @@ import com.santiagocz.dental_service.dto.attendance.AttendanceItemResponseDto;
 import com.santiagocz.dental_service.dto.attendance.AttendanceRequestDto;
 import com.santiagocz.dental_service.dto.attendance.AttendanceResponseDto;
 import com.santiagocz.dental_service.dto.code.CodeResponseDto;
-import com.santiagocz.dental_service.exceptions.EntityConflictException;
-import com.santiagocz.dental_service.exceptions.EntityNotFoundException;
 import com.santiagocz.dental_service.repositories.AttendanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
