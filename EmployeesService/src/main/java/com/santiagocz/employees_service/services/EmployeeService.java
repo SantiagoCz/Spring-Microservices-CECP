@@ -1,12 +1,12 @@
 package com.santiagocz.employees_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.domain.entities.Employee;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import com.santiagocz.employees_service.domain.enums.EmployeeStatus;
 import com.santiagocz.employees_service.dto.employee.EmployeeRequestDto;
 import com.santiagocz.employees_service.dto.employee.EmployeeResponseDto;
-import com.santiagocz.employees_service.exceptions.EntityConflictException;
-import com.santiagocz.employees_service.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.repositories.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

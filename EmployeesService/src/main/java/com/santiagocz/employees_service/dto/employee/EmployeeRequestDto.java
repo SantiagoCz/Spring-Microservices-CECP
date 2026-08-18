@@ -1,6 +1,6 @@
 package com.santiagocz.employees_service.dto.employee;
 
-import com.santiagocz.employees_service.domain.enums.Delegation;
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import jakarta.validation.constraints.*;
 import lombok.Data;

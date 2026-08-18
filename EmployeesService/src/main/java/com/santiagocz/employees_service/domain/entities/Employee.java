@@ -1,6 +1,6 @@
 package com.santiagocz.employees_service.domain.entities;
 
-import com.santiagocz.employees_service.domain.enums.Delegation;
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import com.santiagocz.employees_service.domain.enums.EmployeeStatus;
 import jakarta.persistence.*;

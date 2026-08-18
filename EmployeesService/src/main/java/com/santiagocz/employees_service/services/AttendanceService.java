@@ -1,11 +1,11 @@
 package com.santiagocz.employees_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.domain.entities.Attendance;
 import com.santiagocz.employees_service.domain.entities.Employee;
 import com.santiagocz.employees_service.dto.attendance.AttendanceRequestDto;
 import com.santiagocz.employees_service.dto.attendance.AttendanceResponseDto;
-import com.santiagocz.employees_service.exceptions.EntityConflictException;
-import com.santiagocz.employees_service.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.repositories.AttendanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

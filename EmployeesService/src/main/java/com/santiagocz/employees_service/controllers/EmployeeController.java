@@ -1,8 +1,8 @@
 package com.santiagocz.employees_service.controllers;
 
+import com.santiagocz.common.dto.ApiResponse;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import com.santiagocz.employees_service.domain.enums.EmployeeStatus;
-import com.santiagocz.employees_service.dto.ApiResponse;
 import com.santiagocz.employees_service.dto.employee.EmployeeRequestDto;
 import com.santiagocz.employees_service.dto.employee.EmployeeResponseDto;
 import com.santiagocz.employees_service.services.EmployeeService;
@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/employees")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('SUB_RRHH_ADMIN')")
 public class EmployeeController {
 
     private final EmployeeService employeeService;

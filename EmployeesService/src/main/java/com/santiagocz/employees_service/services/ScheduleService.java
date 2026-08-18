@@ -1,11 +1,11 @@
 package com.santiagocz.employees_service.services;
 
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.domain.entities.Employee;
 import com.santiagocz.employees_service.domain.entities.Schedule;
 import com.santiagocz.employees_service.dto.schedule.ScheduleRequestDto;
 import com.santiagocz.employees_service.dto.schedule.ScheduleResponseDto;
-import com.santiagocz.employees_service.exceptions.EntityConflictException;
-import com.santiagocz.employees_service.exceptions.EntityNotFoundException;
 import com.santiagocz.employees_service.repositories.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
