@@ -1,6 +1,5 @@
 package com.santiagocz.appointments_service.services;
 
-import com.santiagocz.appointments_service.clients.AffiliateClient;
 import com.santiagocz.appointments_service.domain.entities.Appointment;
 import com.santiagocz.appointments_service.domain.entities.Patient;
 import com.santiagocz.appointments_service.domain.entities.Professional;
@@ -9,9 +8,9 @@ import com.santiagocz.appointments_service.domain.enums.AppointmentType;
 import com.santiagocz.appointments_service.domain.enums.Status;
 import com.santiagocz.appointments_service.dto.appointment.AppointmentRequestDto;
 import com.santiagocz.appointments_service.dto.appointment.AppointmentResponseDto;
-import com.santiagocz.appointments_service.exceptions.EntityConflictException;
-import com.santiagocz.appointments_service.exceptions.EntityNotFoundException;
 import com.santiagocz.appointments_service.repositories.*;
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

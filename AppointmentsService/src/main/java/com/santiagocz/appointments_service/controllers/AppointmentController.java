@@ -1,14 +1,15 @@
 package com.santiagocz.appointments_service.controllers;
 
-import com.santiagocz.appointments_service.dto.ApiResponse;
 import com.santiagocz.appointments_service.dto.appointment.AppointmentRequestDto;
 import com.santiagocz.appointments_service.dto.appointment.AppointmentResponseDto;
 import com.santiagocz.appointments_service.services.AppointmentService;
+import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/appointments")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('SUB_ODONTOLOGY_CLERK')")
 public class AppointmentController {
 
     private final AppointmentService appointmentService;

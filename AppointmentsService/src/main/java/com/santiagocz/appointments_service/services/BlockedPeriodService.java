@@ -5,9 +5,9 @@ import com.santiagocz.appointments_service.domain.entities.BlockedPeriod;
 import com.santiagocz.appointments_service.domain.entities.Professional;
 import com.santiagocz.appointments_service.domain.enums.AppointmentStatus;
 import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodRequestDto;
-import com.santiagocz.appointments_service.exceptions.EntityConflictException;
-import com.santiagocz.appointments_service.exceptions.EntityNotFoundException;
 import com.santiagocz.appointments_service.repositories.*;
+import com.santiagocz.common.exceptions.EntityConflictException;
+import com.santiagocz.common.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,4 +64,7 @@ public class BlockedPeriodService {
 
         return affected.size();
     }
+
+    //TODO: faltan los metodos read, update, y delete
+
 }

@@ -1,20 +1,22 @@
 package com.santiagocz.appointments_service.controllers;
 
-import com.santiagocz.appointments_service.dto.ApiResponse;
 import com.santiagocz.appointments_service.dto.patient.PatientRequestDto;
 import com.santiagocz.appointments_service.dto.patient.PatientResponseDto;
 import com.santiagocz.appointments_service.services.PatientService;
+import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/patients")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('SUB_ODONTOLOGY_CLERK')")
 public class PatientController {
 
     private final PatientService patientService;

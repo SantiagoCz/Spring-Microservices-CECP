@@ -1,14 +1,15 @@
 package com.santiagocz.appointments_service.controllers;
 
-import com.santiagocz.appointments_service.dto.ApiResponse;
 import com.santiagocz.appointments_service.dto.schedule.ScheduleBatchRequestDto;
 import com.santiagocz.appointments_service.dto.schedule.ScheduleRequestDto;
 import com.santiagocz.appointments_service.dto.schedule.ScheduleResponseDto;
 import com.santiagocz.appointments_service.services.ScheduleService;
+import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('SUB_ODONTOLOGY_CLERK')")
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
