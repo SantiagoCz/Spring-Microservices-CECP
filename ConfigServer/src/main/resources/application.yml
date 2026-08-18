@@ -13,3 +13,12 @@ spring:
           default-label: main
           username: ${GIT_USER}
           password: ${GIT_PASSWORD}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
