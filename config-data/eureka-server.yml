@@ -11,3 +11,12 @@ eureka:
     fetch-registry: false
   instance:
     lease-renewal-interval-in-seconds: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
