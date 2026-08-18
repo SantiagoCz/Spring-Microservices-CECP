@@ -5,22 +5,24 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 
-@Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
+public class JwtAuthenticationFilter implements WebFilter {
 
     private final JwtService jwtService;
 
@@ -36,10 +38,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     );
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Rutas públicas pasan sin validación
         if (isPublicRoute(path)) {
             return chain.filter(exchange);
         }
@@ -49,23 +50,25 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
             if (token != null && jwtService.isTokenValid(token)) {
                 String username = jwtService.extractUsername(token);
-
-                // ← AGREGAR: Extraer roles del token
                 Claims claims = jwtService.extractAllClaims(token);
                 String roles = (String) claims.get("roles");
 
                 log.info("Gateway: Usuario {} con roles: {}", username, roles);
 
-                // Inyectar headers para que los microservicios los lean
                 ServerWebExchange mutatedExchange = exchange.mutate()
                         .request(r -> r
                                 .header("X-User-Name", username)
-                                .header("X-User-Roles", roles != null ? roles : "")  // ← AGREGAR
-                                .header("X-Internal-Secret", internalSecret)  // ← USAR CONFIG
+                                .header("X-User-Roles", roles != null ? roles : "")
+                                .header("X-Internal-Secret", internalSecret)
                         )
                         .build();
 
-                return chain.filter(mutatedExchange);
+                List<SimpleGrantedAuthority> authorities = parseAuthorities(roles);
+                Authentication authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+
+                return chain.filter(mutatedExchange)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
             } else {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
@@ -78,22 +81,26 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
     }
 
+    private List<SimpleGrantedAuthority> parseAuthorities(String rolesHeader) {
+        if (rolesHeader == null || rolesHeader.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(rolesHeader.split(","))
+                .map(String::trim)
+                .filter(role -> !role.isEmpty())
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+    }
+
     private String extractTokenFromRequest(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
-
         return null;
     }
 
     private boolean isPublicRoute(String path) {
         return PUBLIC_ROUTES.stream().anyMatch(path::startsWith);
-    }
-
-    @Override
-    public int getOrder() {
-        return -1;  // Ejecuta primero
     }
 }
