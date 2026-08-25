@@ -1,5 +1,6 @@
 package com.santiagocz.common.filter;
 
+import com.santiagocz.common.auth.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,8 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     private static final String USER_HEADER = "X-User-Name";
     private static final String ROLES_HEADER = "X-User-Roles";
     private static final String SECRET_HEADER = "X-Internal-Secret";
+    private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String FULL_NAME_HEADER = "X-User-FullName";
 
     @Value("${internal.secret}")
     private String internalSecret;
@@ -43,10 +46,17 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
                 List<SimpleGrantedAuthority> authorities = parseAuthorities(rolesHeader);
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
+
+                authToken.setDetails(new AuthenticatedUser(
+                        parseUserId(request.getHeader(USER_ID_HEADER)),
+                        request.getHeader(FULL_NAME_HEADER)
+                ));
+
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             } else if (username != null && secret != null) {
                 log.warn("Invalid internal secret for user: {}", username);
             }
+
         } catch (Exception e) {
            log.error("Error processing authentication headers", e);
         }
@@ -63,5 +73,17 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
                 .filter(role -> !role.isEmpty())
                 .map(SimpleGrantedAuthority::new)
                 .toList();
+    }
+
+    private Long parseUserId(String rawUserId) {
+        if (rawUserId == null || rawUserId.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(rawUserId);
+        } catch (NumberFormatException e) {
+            log.warn("Invalid X-User-Id header: {}", rawUserId);
+            return null;
+        }
     }
 }

@@ -54,12 +54,14 @@ public class JwtService {
     }
 
     public String generateAccessToken(User user) {
-        // Construir roles:
         String roles = buildRolesString(user);
+        String fullName = buildFullName(user);
 
         return Jwts.builder()
                 .subject(user.getUsername())
                 .claim("roles", roles)
+                .claim("uid", user.getId())
+                .claim("name", fullName)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -73,6 +75,13 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    private String buildFullName(User user) {
+        if (user.getPerson() == null) {
+            return null;
+        }
+        return user.getPerson().getFirstName() + " " + user.getPerson().getLastName();
     }
 
     // Construir cadena de roles

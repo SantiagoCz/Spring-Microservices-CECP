@@ -49,9 +49,14 @@ public class JwtAuthenticationFilter implements WebFilter {
             String token = extractTokenFromRequest(exchange);
 
             if (token != null && jwtService.isTokenValid(token)) {
+
                 String username = jwtService.extractUsername(token);
                 Claims claims = jwtService.extractAllClaims(token);
                 String roles = (String) claims.get("roles");
+
+                Object uidClaim = claims.get("uid");
+                String userId = uidClaim != null ? String.valueOf(uidClaim) : "";
+                String fullName = (String) claims.get("name");
 
                 log.info("Gateway: Usuario {} con roles: {}", username, roles);
 
@@ -59,6 +64,8 @@ public class JwtAuthenticationFilter implements WebFilter {
                         .request(r -> r
                                 .header("X-User-Name", username)
                                 .header("X-User-Roles", roles != null ? roles : "")
+                                .header("X-User-Id", userId)
+                                .header("X-User-FullName", fullName != null ? fullName : "")
                                 .header("X-Internal-Secret", internalSecret)
                         )
                         .build();
