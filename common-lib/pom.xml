@@ -21,5 +21,6 @@
         <module>common-security</module>
         <module>common-feign</module>
         <module>common-domain</module>
+        <module>common-persistence</module>
     </modules>
 </project>
