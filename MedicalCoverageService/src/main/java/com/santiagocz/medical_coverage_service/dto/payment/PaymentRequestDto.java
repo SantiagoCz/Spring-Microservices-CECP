@@ -27,10 +27,6 @@ public class PaymentRequestDto {
     private Long affiliateId;
 
     // TODO: reemplazar por SecurityContext/JWT cuando exista AuthService
-    @NotNull(message = "El empleado creador es obligatorio")
-    private Long creatorId;
-
-    // TODO: reemplazar por SecurityContext/JWT cuando exista AuthService
     @NotNull(message = "La delegación es obligatoria")
     private Delegation delegation;
 

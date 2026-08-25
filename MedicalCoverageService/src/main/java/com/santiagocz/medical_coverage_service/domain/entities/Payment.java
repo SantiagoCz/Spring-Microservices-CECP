@@ -48,7 +48,4 @@ public class Payment extends Auditable {
     @Column(nullable = false)
     private Delegation delegation;
 
-    //TODO: quitar
-    @Column(nullable = false)
-    private Long creatorId;
 }

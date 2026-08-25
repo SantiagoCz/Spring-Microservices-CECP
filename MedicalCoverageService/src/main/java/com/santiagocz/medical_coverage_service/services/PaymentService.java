@@ -207,7 +207,6 @@ public class PaymentService {
                 .discountAmount(discountAmount)
                 .status(Status.ACTIVE)
                 .affiliateId(dto.getAffiliateId())
-                .creatorId(dto.getCreatorId()) // TODO: tomar de SecurityContext cuando exista AuthService
                 .delegation(dto.getDelegation()) // TODO: tomar de SecurityContext cuando exista AuthService
                 .medicalOrder(medicalOrder)
                 .build();
@@ -231,7 +230,6 @@ public class PaymentService {
                 .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .affiliateId(payment.getAffiliateId())
-                .creatorId(payment.getCreatorId())
                 .delegation(payment.getDelegation())
                 .medicalOrder(buildMedicalOrderResponseDto(payment.getMedicalOrder()))
                 .build();
@@ -246,7 +244,6 @@ public class PaymentService {
                 .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .affiliate(affiliate)
-                .creatorId(payment.getCreatorId())
                 .delegation(payment.getDelegation())
                 .medicalOrder(buildMedicalOrderResponseDto(payment.getMedicalOrder()))
                 .build();

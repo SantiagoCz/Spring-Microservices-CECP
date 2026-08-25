@@ -18,7 +18,6 @@ public class PaymentResponseDto {
     private Double discountAmount;
     private Status status;
     private Long affiliateId;
-    private Long creatorId;
     private Delegation delegation;
     private MedicalOrderResponseDto medicalOrder;
 }
