@@ -1,6 +1,7 @@
 package com.santiagocz.medical_coverage_service.domain.entities;
 
 import com.santiagocz.common.delegation.Delegation;
+import com.santiagocz.common.persistence.Auditable;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,7 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payment {
+@EqualsAndHashCode(callSuper = false)
+public class Payment extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,12 +44,11 @@ public class Payment {
     @Column(nullable = false)
     private Long affiliateId;
 
-    @Column(nullable = false)
-    private Long creatorId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Delegation delegation;
 
-    // TODO: auditoría
+    //TODO: quitar
+    @Column(nullable = false)
+    private Long creatorId;
 }

@@ -1,5 +1,6 @@
 package com.santiagocz.medical_coverage_service.domain.entities;
 
+import com.santiagocz.common.persistence.Auditable;
 import com.santiagocz.medical_coverage_service.domain.enums.MedicalOrderType;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
 import jakarta.persistence.*;
@@ -11,7 +12,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MedicalOrder {
+@EqualsAndHashCode(callSuper = false)
+public class MedicalOrder extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,5 +33,4 @@ public class MedicalOrder {
     @OneToOne(mappedBy = "medicalOrder")
     private Payment payment;
 
-    // TODO: auditoría
 }
