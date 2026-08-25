@@ -2,6 +2,7 @@ package com.santiagocz.appointments_service.domain.entities;
 
 import com.santiagocz.appointments_service.domain.enums.AppointmentStatus;
 import com.santiagocz.appointments_service.domain.enums.AppointmentType;
+import com.santiagocz.common.persistence.Auditable;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +16,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"patient", "professional"})
-public class Appointment {
+@EqualsAndHashCode(callSuper = false)
+public class Appointment extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,4 +47,5 @@ public class Appointment {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
 }

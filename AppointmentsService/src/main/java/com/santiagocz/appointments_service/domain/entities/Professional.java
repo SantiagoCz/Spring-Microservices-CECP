@@ -2,11 +2,9 @@ package com.santiagocz.appointments_service.domain.entities;
 
 import com.santiagocz.appointments_service.domain.enums.Specialty;
 import com.santiagocz.appointments_service.domain.enums.Status;
+import com.santiagocz.common.persistence.Auditable;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -16,7 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Professional {
+@EqualsAndHashCode(callSuper = false)
+public class Professional extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,11 +51,4 @@ public class Professional {
     @Builder.Default
     private Integer slotCapacity = 1;
 
-    // TODO: Auditoría
-//    private Long creatorId;
-//    private LocalDateTime creationDate;
-//    private Long modifierId;
-//    private LocalDateTime modificationDate;
-//    private Long deleterId;
-//    private LocalDateTime deletionDate;
 }

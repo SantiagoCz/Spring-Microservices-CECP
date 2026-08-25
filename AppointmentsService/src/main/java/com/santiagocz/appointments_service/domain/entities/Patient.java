@@ -1,11 +1,9 @@
 package com.santiagocz.appointments_service.domain.entities;
 
 import com.santiagocz.appointments_service.domain.enums.Status;
+import com.santiagocz.common.persistence.Auditable;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -15,7 +13,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Patient {
+@EqualsAndHashCode(callSuper = false)
+public class Patient extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,11 +39,4 @@ public class Patient {
     @Column(name = "status", nullable = false)
     private Status status;
 
-    // TODO: Auditoría
-//    private Long creatorId;
-//    private LocalDateTime creationDate;
-//    private Long modifierId;
-//    private LocalDateTime modificationDate;
-//    private Long deleterId;
-//    private LocalDateTime deletionDate;
 }
