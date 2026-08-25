@@ -2,6 +2,8 @@ package com.santiagocz.auth_service.controllers;
 
 import com.santiagocz.auth_service.dto.request.LoginRequest;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
+import com.santiagocz.auth_service.dto.request.ResetPasswordRequest;
+import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
 import com.santiagocz.auth_service.dto.response.ApiResponse;
 import com.santiagocz.auth_service.dto.response.RegisterResponse;
 import com.santiagocz.auth_service.services.AuthService;
@@ -68,7 +70,22 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse(200, "Usuarios obtenidos", null));
     }
 
-    // ──────────── UPDATE - SUBROLES ────────────
+    // ──────────── UPDATE - PASSWORD - SUBROLES ────────────
+
+    @PatchMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse> updateMyPassword(@Valid @RequestBody UpdatePasswordRequest request) {
+        userService.updateMyPassword(request);
+        return ResponseEntity.ok(new ApiResponse(200, "Contraseña actualizada correctamente", null));
+    }
+
+    @PatchMapping("/{userId}/password/reset")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> resetUserPassword(@PathVariable Long userId,
+                                                         @Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetUserPassword(userId, request.getNewPassword());
+        return ResponseEntity.ok(new ApiResponse(200, "Contraseña restablecida correctamente", null));
+    }
 
     @PostMapping("/{userId}/subroles/{subrolName}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")  // Por ahora solo SUPER_ADMIN (después se complica para ADMIN)

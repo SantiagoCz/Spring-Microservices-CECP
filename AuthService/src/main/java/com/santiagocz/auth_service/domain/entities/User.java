@@ -2,15 +2,11 @@ package com.santiagocz.auth_service.domain.entities;
 
 import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Where;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -25,7 +21,11 @@ import java.util.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"password", "subroles", "person"})
+@EqualsAndHashCode(exclude = {"subroles", "person"})
 public class User implements UserDetails {
+
+    // ──────────── IDENTITY ────────────
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +34,10 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false, length = 8)
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 60)
     private String password;
+
+    // ──────────── ROLES & RELATIONS ────────────
 
     @Enumerated(EnumType.STRING)
     @Column(name = "hierarchy_role", nullable = false)
@@ -54,23 +56,7 @@ public class User implements UserDetails {
     @JoinColumn(name = "person_id", unique = true)
     private Person person;
 
-    @Column(name = "created_by")
-    private String createdBy;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_by")
-    private String updatedBy;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_by")
-    private String deletedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    // ──────────── ACCOUNT STATE ────────────
 
     @Column(nullable = false)
     @Builder.Default
@@ -87,6 +73,40 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @Builder.Default
     private Boolean credentialsNonExpired = true;
+
+    // ──────────── AUDIT ────────────
+
+    @Column(name = "created_by", updatable = false)
+    private Long createdBy;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_by")
+    private Long updatedBy;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    // ──────────── LIFECYCLE ────────────
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // ──────────── USER DETAILS ────────────
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -116,16 +136,5 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }
