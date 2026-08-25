@@ -3,6 +3,7 @@ package com.santiagocz.affiliates_service.domain.entities;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
 import com.santiagocz.affiliates_service.domain.enums.RelationType;
 import com.santiagocz.affiliates_service.domain.enums.Status;
+import com.santiagocz.common.persistence.Auditable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,8 +33,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"primaryAffiliate", "familyMembers"})
-@EqualsAndHashCode(exclude = {"primaryAffiliate", "familyMembers"})
-public class Affiliate {
+@EqualsAndHashCode(callSuper = false, exclude = {"primaryAffiliate", "familyMembers"})
+public class Affiliate extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,11 +74,4 @@ public class Affiliate {
     @OneToMany(mappedBy = "primaryAffiliate", fetch = FetchType.LAZY)
     private List<Affiliate> familyMembers;
 
-    // TODO: Auditoría
-//    private Long creatorId;
-//    private LocalDateTime creationDate;
-//    private Long modifierId;
-//    private LocalDateTime modificationDate;
-//    private Long deleterId;
-//    private LocalDateTime deletionDate;
 }
