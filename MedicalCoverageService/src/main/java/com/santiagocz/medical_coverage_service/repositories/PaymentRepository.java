@@ -21,13 +21,13 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             "WHERE p.date BETWEEN :startDate AND :endDate " +
             "AND (:status IS NULL OR p.status = :status) " +
             "AND (:delegation IS NULL OR p.delegation = :delegation) " +
-            "AND (:creatorId IS NULL OR p.creatorId = :creatorId) " +
+            "AND (:createdBy IS NULL OR p.createdBy = :createdBy) " +
             "ORDER BY p.date DESC, mo.number ASC")
     List<Payment> findByFilters(@Param("startDate") LocalDate startDate,
                                 @Param("endDate") LocalDate endDate,
                                 @Param("status") Status status,
                                 @Param("delegation") Delegation delegation,
-                                @Param("creatorId") Long creatorId);
+                                @Param("createdBy") Long createdBy);
 
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder " +
             "WHERE p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
@@ -36,10 +36,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                                    @Param("startOfNextMonth") LocalDate startOfNextMonth);
 
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
-            "WHERE p.creatorId = :creatorId " +
+            "WHERE p.createdBy = :createdBy " +
             "AND p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
             "ORDER BY p.date DESC, mo.number DESC")
-    List<Payment> findByCreatorIdThisMonth(@Param("creatorId") Long creatorId,
+    List<Payment> findByCreatorIdThisMonth(@Param("createdBy") Long createdBy,
                                            @Param("startOfMonth") LocalDate startOfMonth,
                                            @Param("startOfNextMonth") LocalDate startOfNextMonth);
 
