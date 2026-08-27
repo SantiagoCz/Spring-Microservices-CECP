@@ -3,6 +3,7 @@ package com.santiagocz.auth_service.domain.entities;
 import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Where;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -44,6 +45,7 @@ public class User implements UserDetails {
     private HierarchyRole hierarchyRole;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
+    @BatchSize(size = 20)
     @JoinTable(
             name = "user_subroles",
             joinColumns = @JoinColumn(name = "user_id"),

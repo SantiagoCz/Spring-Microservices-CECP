@@ -1,6 +1,10 @@
 package com.santiagocz.auth_service.repositories;
 
 import com.santiagocz.auth_service.domain.entities.User;
+import com.santiagocz.auth_service.domain.enums.HierarchyRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +23,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
     Optional<User> findByIdIncludingDeleted(@PathVariable Long id);
+
+    @EntityGraph(attributePaths = "person")
+    Page<User> findByCreatedBy(Long createdBy, Pageable pageable);
+
+    Page<User> findByHierarchyRoleNot(HierarchyRole hierarchyRole, Pageable pageable);
 }

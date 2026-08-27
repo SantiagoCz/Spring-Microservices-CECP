@@ -10,6 +10,8 @@ import com.santiagocz.auth_service.services.AuthService;
 import com.santiagocz.auth_service.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,10 +65,9 @@ public class AuthController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")  // Solo SUPER_ADMIN ve todos
-    public ResponseEntity<ApiResponse> listAllUsers() {
-        // TODO: Implementar método en UserService
-        return ResponseEntity.ok(new ApiResponse(200, "Usuarios obtenidos", null));
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> listUsers(@PageableDefault(size = 20, sort = "username") Pageable pageable) {
+        return ResponseEntity.ok(new ApiResponse(200, "Usuarios obtenidos", userService.listUsers(pageable)));
     }
 
     // ──────────── UPDATE - PASSWORD - SUBROLES ────────────

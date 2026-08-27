@@ -6,6 +6,7 @@ import com.santiagocz.auth_service.domain.entities.User;
 import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
+import com.santiagocz.auth_service.dto.response.PageResponse;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
 import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.exceptions.InvalidPasswordException;
@@ -16,6 +17,8 @@ import com.santiagocz.auth_service.repositories.PersonRepository;
 import com.santiagocz.auth_service.repositories.SubRoleRepository;
 import com.santiagocz.auth_service.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -72,6 +75,19 @@ public class UserService {
             throw new AccessDeniedException("No tenés permisos para acceder a este usuario");
         }
         return buildUserResponse(currentUser);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> listUsers(Pageable pageable) {
+        User authenticatedUser = getAuthenticatedPrincipal();
+
+        Page<User> users = switch (authenticatedUser.getHierarchyRole()) {
+            case SUPER_ADMIN -> userRepository.findByHierarchyRoleNot(HierarchyRole.SUPER_ADMIN, pageable);
+            case ADMIN -> userRepository.findByCreatedBy(authenticatedUser.getId(), pageable);
+            default -> Page.empty(pageable);
+        };
+
+        return PageResponse.from(users.map(this::buildUserResponse));
     }
 
     @Transactional(readOnly = true)
