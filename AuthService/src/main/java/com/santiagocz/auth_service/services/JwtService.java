@@ -56,12 +56,14 @@ public class JwtService {
     public String generateAccessToken(User user) {
         String roles = buildRolesString(user);
         String fullName = buildFullName(user);
+        String delegation = user.getDelegation() != null ? user.getDelegation().name() : null;
 
         return Jwts.builder()
                 .subject(user.getUsername())
                 .claim("roles", roles)
                 .claim("uid", user.getId())
                 .claim("name", fullName)
+                .claim("delegation", delegation)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

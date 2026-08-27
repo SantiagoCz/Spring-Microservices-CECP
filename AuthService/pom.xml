@@ -114,6 +114,14 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Common Libs -->
+		<dependency>
+			<groupId>com.santiagocz</groupId>
+			<artifactId>common-domain</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

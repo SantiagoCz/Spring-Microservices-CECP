@@ -57,6 +57,7 @@ public class JwtAuthenticationFilter implements WebFilter {
                 Object uidClaim = claims.get("uid");
                 String userId = uidClaim != null ? String.valueOf(uidClaim) : "";
                 String fullName = (String) claims.get("name");
+                String delegation = (String) claims.get("delegation");
 
                 log.info("Gateway: Usuario {} con roles: {}", username, roles);
 
@@ -66,6 +67,7 @@ public class JwtAuthenticationFilter implements WebFilter {
                                 .header("X-User-Roles", roles != null ? roles : "")
                                 .header("X-User-Id", userId)
                                 .header("X-User-FullName", fullName != null ? fullName : "")
+                                .header("X-User-Delegation", delegation != null ? delegation : "")
                                 .header("X-Internal-Secret", internalSecret)
                         )
                         .build();

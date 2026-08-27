@@ -1,4 +1,6 @@
 package com.santiagocz.common.auth;
 
-public record AuthenticatedUser(Long id, String fullName) {
+import com.santiagocz.common.delegation.Delegation;
+
+public record AuthenticatedUser(Long id, String fullName, Delegation delegation) {
 }

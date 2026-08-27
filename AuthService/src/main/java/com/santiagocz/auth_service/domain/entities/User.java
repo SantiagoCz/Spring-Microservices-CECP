@@ -1,6 +1,7 @@
 package com.santiagocz.auth_service.domain.entities;
 
 import com.santiagocz.auth_service.domain.enums.HierarchyRole;
+import com.santiagocz.common.delegation.Delegation;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -57,6 +58,10 @@ public class User implements UserDetails {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
     @JoinColumn(name = "person_id", unique = true)
     private Person person;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Delegation delegation;
 
     // ──────────── ACCOUNT STATE ────────────
 

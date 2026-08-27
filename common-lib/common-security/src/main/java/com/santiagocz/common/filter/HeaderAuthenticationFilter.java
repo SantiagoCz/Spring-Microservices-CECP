@@ -1,5 +1,6 @@
 package com.santiagocz.common.filter;
 
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.common.auth.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +25,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     private static final String SECRET_HEADER = "X-Internal-Secret";
     private static final String USER_ID_HEADER = "X-User-Id";
     private static final String FULL_NAME_HEADER = "X-User-FullName";
+    private static final String DELEGATION_HEADER = "X-User-Delegation";
 
     @Value("${internal.secret}")
     private String internalSecret;
@@ -49,7 +51,8 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
                 authToken.setDetails(new AuthenticatedUser(
                         parseUserId(request.getHeader(USER_ID_HEADER)),
-                        request.getHeader(FULL_NAME_HEADER)
+                        request.getHeader(FULL_NAME_HEADER),
+                        parseDelegation(request.getHeader(DELEGATION_HEADER))
                 ));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -83,6 +86,18 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
             return Long.valueOf(rawUserId);
         } catch (NumberFormatException e) {
             log.warn("Invalid X-User-Id header: {}", rawUserId);
+            return null;
+        }
+    }
+
+    private Delegation parseDelegation(String rawDelegation) {
+        if (rawDelegation == null || rawDelegation.isBlank()) {
+            return null;
+        }
+        try {
+            return Delegation.valueOf(rawDelegation);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid X-User-Delegation header: {}", rawDelegation);
             return null;
         }
     }

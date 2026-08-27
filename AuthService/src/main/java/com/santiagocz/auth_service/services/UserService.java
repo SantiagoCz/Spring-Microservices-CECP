@@ -273,6 +273,7 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .hierarchyRole(user.getHierarchyRole())
+                .delegation(user.getDelegation())
                 .subroles(user.getSubroles().stream()
                         .map(SubRole::getName)
                         .collect(Collectors.toSet()))
