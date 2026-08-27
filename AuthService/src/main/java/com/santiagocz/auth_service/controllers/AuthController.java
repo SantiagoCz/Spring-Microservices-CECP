@@ -5,7 +5,7 @@ import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.request.ResetPasswordRequest;
 import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
 import com.santiagocz.auth_service.dto.response.ApiResponse;
-import com.santiagocz.auth_service.dto.response.RegisterResponse;
+import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.services.AuthService;
 import com.santiagocz.auth_service.services.UserService;
 import jakarta.validation.Valid;
@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/register")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
-        RegisterResponse response = userService.registerUser(request);
+        UserResponse response = userService.registerUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse(201, "Usuario registrado exitosamente", response));
     }
@@ -59,8 +59,7 @@ public class AuthController {
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
-        // TODO: En el service, validar que si es ADMIN, solo vea usuarios que él creó
-        return ResponseEntity.ok(new ApiResponse(200, "Usuario obtenido", null));
+        return ResponseEntity.ok(new ApiResponse(200, "Usuario obtenido", userService.getUserById(userId)));
     }
 
     @GetMapping

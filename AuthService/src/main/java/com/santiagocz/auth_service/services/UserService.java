@@ -7,7 +7,7 @@ import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
-import com.santiagocz.auth_service.dto.response.RegisterResponse;
+import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.exceptions.InvalidPasswordException;
 import com.santiagocz.auth_service.exceptions.SubRoleNotFoundException;
 import com.santiagocz.auth_service.exceptions.UserAlreadyExistsException;
@@ -38,7 +38,7 @@ public class UserService {
     // ──────────── CREATE ────────────
 
     @Transactional
-    public RegisterResponse registerUser(RegisterRequest request) {
+    public UserResponse registerUser(RegisterRequest request) {
 
         validateDniNotInUse(request.getPerson().getDni());
 
@@ -55,19 +55,23 @@ public class UserService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .hierarchyRole(request.getHierarchyRole())
                 .person(person)
+                .createdBy(getAuthenticatedUserId())
                 .build();
 
-        setCreatorUser(user);
-
-        return buildResponse(userRepository.save(user));
+        return buildUserResponse(userRepository.save(user));
     }
 
     // ──────────── READ ────────────
 
     @Transactional(readOnly = true)
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+    public UserResponse getUserById(Long userId) {
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(userId);
+
+        if (!canManage(authenticatedUser, currentUser)) {
+            throw new AccessDeniedException("No tenés permisos para acceder a este usuario");
+        }
+        return buildUserResponse(currentUser);
     }
 
     @Transactional(readOnly = true)
@@ -87,28 +91,28 @@ public class UserService {
 
     @Transactional
     public void updateMyPassword(UpdatePasswordRequest request) {
-        User user = getAuthenticatedUser();
+        User authenticatedUser = getAuthenticatedUserManaged();
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), authenticatedUser.getPassword())) {
             throw new AccessDeniedException("La contraseña actual no es correcta");
         }
-        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+        if (passwordEncoder.matches(request.getNewPassword(), authenticatedUser.getPassword())) {
             throw new InvalidPasswordException("La nueva contraseña debe ser distinta de la actual");
         }
 
-        applyNewPassword(user, request.getNewPassword());
+        applyNewPassword(authenticatedUser, request.getNewPassword());
     }
 
     @Transactional
     public void resetUserPassword(Long userId, String newPassword) {
-        User actor = getAuthenticatedUser();
-        User target = getUserById(userId);
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(userId);
 
-        if (!canManage(actor, target)) {
+        if (!canManage(authenticatedUser, currentUser)) {
             throw new AccessDeniedException("No tenés permisos para modificar la contraseña de este usuario");
         }
 
-        applyNewPassword(target, newPassword);
+        applyNewPassword(currentUser, newPassword);
     }
 
     private void applyNewPassword(User user, String rawPassword) {
@@ -120,87 +124,97 @@ public class UserService {
 
     @Transactional
     public void addSubrolToUser(Long userId, String subrolName) {
-        User user = getUserById(userId);
-        user.getSubroles().add(getSubRoleByName(subrolName));
-        setUpdaterUser(user);
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(userId);
+
+        if (!canManage(authenticatedUser, currentUser)) {
+            throw new AccessDeniedException("No tenés permisos para modificar los subroles de este usuario");
+        }
+
+        currentUser.getSubroles().add(getSubRoleByName(subrolName));
+        setUpdaterUser(currentUser);
     }
 
     @Transactional
     public void removeSubrolFromUser(Long userId, String subrolName) {
-        User user = getUserById(userId);
-        user.getSubroles().remove(getSubRoleByName(subrolName));
-        setUpdaterUser(user);
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(userId);
+
+        if (!canManage(authenticatedUser, currentUser)) {
+            throw new AccessDeniedException("No tenés permisos para modificar los subroles de este usuario");
+        }
+
+        currentUser.getSubroles().remove(getSubRoleByName(subrolName));
+        setUpdaterUser(currentUser);
     }
 
     // ──────────── DELETE — RESTORE ────────────
 
     @Transactional
     public void deleteUser(Long id) {
-        User actor = getAuthenticatedUser();
-        User user = getUserById(id);
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(id);
 
-        if (!canDelete(actor, user)) {
+        if (!canDelete(authenticatedUser, currentUser)) {
             throw new AccessDeniedException("No tenés permisos para dar de baja a este usuario");
         }
 
-        user.setEnabled(false);
-        setDeleterUser(user);
-        setUpdaterUser(user);
+        currentUser.setEnabled(false);
+        currentUser.setDeletedBy(authenticatedUser.getId());
+        currentUser.setDeletedAt(LocalDateTime.now());
+        setUpdaterUser(currentUser);
     }
 
     @Transactional
     public void restoreUser(Long id) {
-        User actor = getAuthenticatedUser();
-        User user = userRepository.findByIdIncludingDeleted(id)
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = userRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
-        if (!canManage(actor, user)) {
+        if (!canManage(authenticatedUser, currentUser)) {
             throw new AccessDeniedException("No tenés permisos para dar de alta a este usuario");
         }
 
-        user.setEnabled(true);
-        user.setDeletedAt(null);
-        user.setDeletedBy(null);
-        setUpdaterUser(user);
+        currentUser.setEnabled(true);
+        currentUser.setDeletedAt(null);
+        currentUser.setDeletedBy(null);
+        setUpdaterUser(currentUser);
     }
 
     // ──────────── AUTHORIZATION ────────────
 
-    private boolean canManage(User actor, User target) {
-        return switch (actor.getHierarchyRole()) {
-            case SUPER_ADMIN -> target.getHierarchyRole() != HierarchyRole.SUPER_ADMIN;
-            case ADMIN -> target.getHierarchyRole() == HierarchyRole.USER
-                    && actor.getId().equals(target.getCreatedBy());
+    private boolean canManage(User authenticatedUser, User currentUser) {
+        return switch (authenticatedUser.getHierarchyRole()) {
+            case SUPER_ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN;
+            case ADMIN -> currentUser.getHierarchyRole() == HierarchyRole.USER
+                    && authenticatedUser.getId().equals(currentUser.getCreatedBy());
             default -> false;
         };
     }
 
-    private boolean canDelete(User actor, User target) {
-        if (actor.getId().equals(target.getId())) {
+    private boolean canDelete(User authenticatedUser, User currentUser) {
+        if (authenticatedUser.getId().equals(currentUser.getId())) {
             return false;   // nadie se da de baja a sí mismo
         }
-        if (target.getHierarchyRole() == HierarchyRole.SUPER_ADMIN) {
+        if (currentUser.getHierarchyRole() == HierarchyRole.SUPER_ADMIN) {
             return false;   // los superadministradores no se dan de baja
         }
-        return canManage(actor, target);
+        return canManage(authenticatedUser, currentUser);
     }
 
     // ──────────── AUDIT METADATA ────────────
 
-    private void setCreatorUser(User user) {
-        user.setCreatedBy(getAuthenticatedUser().getId());
-    }
-
     private void setUpdaterUser(User user) {
-        user.setUpdatedBy(getAuthenticatedUser().getId());
-    }
-
-    private void setDeleterUser(User user) {
-        user.setDeletedBy(getAuthenticatedUser().getId());
-        user.setDeletedAt(LocalDateTime.now());
+        user.setUpdatedBy(getAuthenticatedUserId());
     }
 
     // ──────────── PRIVATE HELPERS ────────────
+
+    // Busca sin aplicar reglas de permiso. Para uso interno del service
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+    }
 
     private void validateDniNotInUse(String dni) {
         if (userRepository.existsByUsername(dni)) {
@@ -213,23 +227,40 @@ public class UserService {
                 .orElseThrow(() -> new SubRoleNotFoundException("Subrol no encontrado: " + subrolName));
     }
 
-    private User getAuthenticatedUser() {
+    // ──────────── AUTHENTICATED USER ────────────
+
+    private Long getAuthenticatedUserId() {
+        return getAuthenticatedPrincipal().getId();
+    }
+
+    // Principal en memoria. Solo para leer campos simples: id, hierarchyRole, username
+    private User getAuthenticatedPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof User user)) {
             throw new AccessDeniedException("No hay usuario autenticado");
         }
-        return getUserByUsername(authentication.getName());
+        return user;
+    }
+
+    // Entidad gestionada. Solo cuando hay que modificar al usuario autenticado
+    private User getAuthenticatedUserManaged() {
+        return userRepository.findById(getAuthenticatedUserId())
+                .orElseThrow(() -> new AccessDeniedException("No hay usuario autenticado"));
     }
 
     // ──────────── MAPPERS ────────────
 
-    private RegisterResponse buildResponse(User user) {
-        return RegisterResponse.builder()
+    private UserResponse buildUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
                 .hierarchyRole(user.getHierarchyRole())
                 .subroles(user.getSubroles().stream()
                         .map(SubRole::getName)
                         .collect(Collectors.toSet()))
+                .enabled(user.getEnabled())
                 .person(buildPersonResponse(user.getPerson()))
                 .build();
     }
