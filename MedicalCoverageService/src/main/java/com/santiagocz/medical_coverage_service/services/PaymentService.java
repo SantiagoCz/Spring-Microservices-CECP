@@ -1,5 +1,6 @@
 package com.santiagocz.medical_coverage_service.services;
 
+import com.santiagocz.common.context.CurrentUser;
 import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +25,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+
+    private static final String SUPER_ADMIN = "ROLE_SUPER_ADMIN";
+    private static final int EDIT_WINDOW_DAYS = 30;
 
     private final PaymentRepository paymentRepository;
     private final MedicalOrderService medicalOrderService;
@@ -32,24 +37,25 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponseDto create(PaymentRequestDto dto) {
+        Delegation delegation = resolveDelegation(dto.getDelegation());
+
         validateAffiliateIsActive(dto.getAffiliateId());
 
+        MedicalOrder medicalOrder = medicalOrderService.buildAndValidate(dto.getMedicalOrderDto(), delegation);
+        Payment payment = buildPayment(dto, medicalOrder, delegation);
 
-        MedicalOrder medicalOrder = medicalOrderService.buildAndValidate(
-                dto.getMedicalOrderDto(), dto.getDelegation());
-        Payment payment = buildPayment(dto, medicalOrder);
-
-        Payment saved = paymentRepository.save(payment);
-
-        return buildResponseDto(saved);
+        return buildResponseDto(paymentRepository.save(payment));
     }
 
     // ──────────── READ (simple, no affiliate) ────────────
 
     @Transactional(readOnly = true)
     public List<PaymentResponseDto> findByAffiliateId(Long affiliateId) {
+        Delegation delegation = resolveDelegationFilter(null);
+
         return paymentRepository.findByAffiliateId(affiliateId)
                 .stream()
+                .filter(p -> delegation == null || p.getDelegation() == delegation)
                 .map(this::buildResponseDto)
                 .toList();
     }
@@ -60,33 +66,18 @@ public class PaymentService {
     public List<PaymentListItemDto> findByFilters(LocalDate startDate,
                                                   LocalDate endDate,
                                                   Status status,
-                                                  Delegation delegation,
+                                                  Delegation requestedDelegation,
                                                   Long creatorId) {
-        // TODO: cuando exista AuthService, aplicar lógica de rol:
-        // - USER/ADMIN: forzar delegation del JWT, ignorar la del request
-        // - SUPERADMIN: usar delegation del request (null = todas)
+        Delegation delegation = resolveDelegationFilter(requestedDelegation);
 
-        List<Payment> payments = paymentRepository.findByFilters(
-                startDate, endDate, status, delegation, creatorId);
-        return toListItems(payments);
+        return toListItems(paymentRepository.findByFilters(
+                startDate, endDate, status, delegation, creatorId));
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentListItemDto> findAllOfThisMonthForListing() {
+    public List<PaymentListItemDto> findThisMonth(Long creatorId) {
         LocalDate[] range = getMonthRange();
-        return toListItems(paymentRepository.findAllThisMonth(range[0], range[1]));
-    }
-
-    @Transactional(readOnly = true)
-    public List<PaymentListItemDto> findByDelegationThisMonthForListing(Delegation delegation) {
-        LocalDate[] range = getMonthRange();
-        return toListItems(paymentRepository.findByDelegationThisMonth(delegation, range[0], range[1]));
-    }
-
-    @Transactional(readOnly = true)
-    public List<PaymentListItemDto> findByCreatorIdThisMonthForListing(Long creatorId) {
-        LocalDate[] range = getMonthRange();
-        return toListItems(paymentRepository.findByCreatorIdThisMonth(creatorId, range[0], range[1]));
+        return findByFilters(range[0], range[1], null, null, creatorId);
     }
 
     // ──────────── READ (enriched detail with affiliate) ────────────
@@ -94,8 +85,9 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentDetailDto findById(Long id) {
         Payment payment = getEntityById(id);
-        AffiliateSummaryDto affiliate = lookupSingleAffiliate(payment.getAffiliateId());
-        return buildDetailDto(payment, affiliate);
+        validateSameDelegation(payment);
+
+        return buildDetailDto(payment, lookupSingleAffiliate(payment.getAffiliateId()));
     }
 
     @Transactional(readOnly = true)
@@ -103,8 +95,9 @@ public class PaymentService {
         Payment payment = paymentRepository.findByMedicalOrderNumber(orderNumber)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró un pago para la orden número: " + orderNumber));
-        AffiliateSummaryDto affiliate = lookupSingleAffiliate(payment.getAffiliateId());
-        return buildDetailDto(payment, affiliate);
+        validateSameDelegation(payment);
+
+        return buildDetailDto(payment, lookupSingleAffiliate(payment.getAffiliateId()));
     }
 
     // ──────────── UPDATE ────────────
@@ -112,9 +105,9 @@ public class PaymentService {
     @Transactional
     public PaymentResponseDto update(Long paymentId, PaymentUpdateDto dto) {
         Payment payment = getEntityById(paymentId);
+        validateSameDelegation(payment);
         validateIsActive(payment);
-
-        // TODO: validar período de edición (30 días) cuando exista AuthService con roles
+        validateEditWindow(payment);
 
         medicalOrderService.update(payment.getMedicalOrder(), dto.getMedicalOrderDto(), payment.getDelegation());
 
@@ -131,6 +124,7 @@ public class PaymentService {
     @Transactional
     public void cancel(Long paymentId) {
         Payment payment = getEntityById(paymentId);
+        validateSameDelegation(payment);
 
         if (payment.getStatus() == Status.INACTIVE) {
             throw new EntityConflictException("El pago ya está inactivo.");
@@ -154,10 +148,20 @@ public class PaymentService {
         }
     }
 
+    private void validateEditWindow(Payment payment) {
+        if (CurrentUser.hasRole(SUPER_ADMIN) || payment.getCreatedAt() == null) {
+            return;
+        }
+        if (payment.getCreatedAt().isBefore(LocalDateTime.now().minusDays(EDIT_WINDOW_DAYS))) {
+            throw new EntityConflictException(
+                    "El pago solo puede modificarse dentro de los " + EDIT_WINDOW_DAYS + " días de su registro.");
+        }
+    }
+
     private LocalDate[] getMonthRange() {
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate startOfNextMonth = startOfMonth.plusMonths(1);
-        return new LocalDate[]{startOfMonth, startOfNextMonth};
+        LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1);
+        return new LocalDate[]{startOfMonth, endOfMonth};
     }
 
     private void validateAffiliateIsActive(Long affiliateId) {
@@ -165,6 +169,43 @@ public class PaymentService {
             throw new EntityConflictException("El afiliado no existe o no está activo.");
         }
     }
+
+    // ──────────── USER DELEGATION ────────────
+
+    private Delegation userDelegation() {
+        Delegation delegation = CurrentUser.get().delegation();
+
+        if (delegation == null) {
+            throw new EntityConflictException("El usuario autenticado no tiene una delegación asignada.");
+        }
+        return delegation;
+    }
+
+    private Delegation resolveDelegation(Delegation requestedDelegation) {
+        if (requestedDelegation != null && CurrentUser.hasRole(SUPER_ADMIN)) {
+            return requestedDelegation;
+        }
+        return userDelegation();
+    }
+
+    private Delegation resolveDelegationFilter(Delegation requestedDelegation) {
+        if (CurrentUser.hasRole(SUPER_ADMIN)) {
+            return requestedDelegation;
+        }
+        return userDelegation();
+    }
+
+    // Un pago de otra delegación se comporta como inexistente
+    private void validateSameDelegation(Payment payment) {
+        if (CurrentUser.hasRole(SUPER_ADMIN)) {
+            return;
+        }
+        if (payment.getDelegation() != userDelegation()) {
+            throw new EntityNotFoundException("No se encontró el pago con ID: " + payment.getId());
+        }
+    }
+
+    // ──────────── FEIGN TO AFFILIATES ────────────
 
     private AffiliateSummaryDto lookupSingleAffiliate(Long affiliateId) {
         return affiliateClient.lookupByIds(List.of(affiliateId))
@@ -197,17 +238,15 @@ public class PaymentService {
 
     // ---- Entity Builder ----
 
-    private Payment buildPayment(PaymentRequestDto dto, MedicalOrder medicalOrder) {
-        Double discountAmount = calculateDiscountAmount(dto.getAmount(), dto.getDiscount());
-
+    private Payment buildPayment(PaymentRequestDto dto, MedicalOrder medicalOrder, Delegation delegation) {
         return Payment.builder()
                 .date(dto.getDate())
                 .amount(dto.getAmount())
                 .discount(dto.getDiscount())
-                .discountAmount(discountAmount)
+                .discountAmount(calculateDiscountAmount(dto.getAmount(), dto.getDiscount()))
                 .status(Status.ACTIVE)
                 .affiliateId(dto.getAffiliateId())
-                .delegation(dto.getDelegation()) // TODO: tomar de SecurityContext cuando exista AuthService
+                .delegation(delegation)
                 .medicalOrder(medicalOrder)
                 .build();
     }

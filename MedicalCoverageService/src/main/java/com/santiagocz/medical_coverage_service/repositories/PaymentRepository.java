@@ -29,28 +29,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                                 @Param("delegation") Delegation delegation,
                                 @Param("createdBy") Long createdBy);
 
-    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder " +
-            "WHERE p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
-            "ORDER BY p.date DESC")
-    List<Payment> findAllThisMonth(@Param("startOfMonth") LocalDate startOfMonth,
-                                   @Param("startOfNextMonth") LocalDate startOfNextMonth);
-
-    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
-            "WHERE p.createdBy = :createdBy " +
-            "AND p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
-            "ORDER BY p.date DESC, mo.number DESC")
-    List<Payment> findByCreatorIdThisMonth(@Param("createdBy") Long createdBy,
-                                           @Param("startOfMonth") LocalDate startOfMonth,
-                                           @Param("startOfNextMonth") LocalDate startOfNextMonth);
-
-    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
-            "WHERE p.delegation = :delegation " +
-            "AND p.date >= :startOfMonth AND p.date < :startOfNextMonth " +
-            "ORDER BY p.date DESC, mo.number DESC")
-    List<Payment> findByDelegationThisMonth(@Param("delegation") Delegation delegation,
-                                            @Param("startOfMonth") LocalDate startOfMonth,
-                                            @Param("startOfNextMonth") LocalDate startOfNextMonth);
-
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.medicalOrder mo " +
             "WHERE mo.number = :orderNumber")
     Optional<Payment> findByMedicalOrderNumber(@Param("orderNumber") Long orderNumber);

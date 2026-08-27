@@ -48,28 +48,13 @@ public class PaymentController {
             @RequestParam(required = false) Delegation delegation,
             @RequestParam(required = false) Long creatorId) {
 
-        // TODO: cuando exista AuthService:
-        // - Si rol es USER o ADMIN: ignorar delegation del request,
-        //   forzar delegation del JWT
-        // - Si rol es SUPERADMIN: usar delegation del request (puede ser null = todas)
         return ResponseEntity.ok(paymentService.findByFilters(
                 startDate, endDate, status, delegation, creatorId));
     }
 
     @GetMapping
-    public ResponseEntity<List<PaymentListItemDto>> findThisMonth(
-            @RequestParam(required = false) Delegation delegation,
-            @RequestParam(required = false) Long creatorId) {
-
-        // TODO: reemplazar este filtro manual por lógica basada en el rol
-        // del usuario autenticado (SecurityContext), cuando exista AuthService
-        if (delegation != null) {
-            return ResponseEntity.ok(paymentService.findByDelegationThisMonthForListing(delegation));
-        }
-        if (creatorId != null) {
-            return ResponseEntity.ok(paymentService.findByCreatorIdThisMonthForListing(creatorId));
-        }
-        return ResponseEntity.ok(paymentService.findAllOfThisMonthForListing());
+    public ResponseEntity<List<PaymentListItemDto>> findThisMonth(@RequestParam(required = false) Long creatorId) {
+        return ResponseEntity.ok(paymentService.findThisMonth(creatorId));
     }
 
     // ──────────── READ (enriched detail with affiliate) ────────────
