@@ -752,6 +752,8 @@ class PaymentServiceTest {
             Integer newDiscount = 100;
 
             Payment payment = paymentOf(DEFAULT_DELEGATION);
+            payment.setCreatedAt(LocalDateTime.now().minusDays(10));
+
             PaymentUpdateDto dto = defaultPaymentUpdateDto();
             dto.setDate(yesterday);
             dto.setAmount(newAmount);
