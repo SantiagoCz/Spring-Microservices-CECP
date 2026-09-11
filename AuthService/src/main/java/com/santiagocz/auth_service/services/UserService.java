@@ -1,5 +1,6 @@
 package com.santiagocz.auth_service.services;
 
+import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.auth_service.domain.entities.Person;
 import com.santiagocz.auth_service.domain.entities.SubRole;
 import com.santiagocz.auth_service.domain.entities.User;
@@ -10,6 +11,7 @@ import com.santiagocz.auth_service.dto.response.PageResponse;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
 import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.exceptions.InvalidPasswordException;
+import com.santiagocz.auth_service.exceptions.InvalidUserDataException;
 import com.santiagocz.auth_service.exceptions.SubRoleNotFoundException;
 import com.santiagocz.auth_service.exceptions.UserAlreadyExistsException;
 import com.santiagocz.auth_service.exceptions.UserNotFoundException;
@@ -42,7 +44,12 @@ public class UserService {
 
     @Transactional
     public UserResponse registerUser(RegisterRequest request) {
+        User creator = getAuthenticatedPrincipal();
 
+        boolean canChooseAny = creator.getHierarchyRole() == HierarchyRole.SUPER_ADMIN
+                || (creator.getHierarchyRole() == HierarchyRole.ADMIN && isFirstLevelAdmin(creator));
+
+        validateCanRegister(creator, canChooseAny, request.getHierarchyRole());
         validateDniNotInUse(request.getPerson().getDni());
 
         Person person = personRepository.save(Person.builder()
@@ -57,8 +64,9 @@ public class UserService {
                 .username(request.getPerson().getDni())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .hierarchyRole(request.getHierarchyRole())
+                .delegation(resolveDelegationForNewUser(creator, canChooseAny, request))
                 .person(person)
-                .createdBy(getAuthenticatedUserId())
+                .createdBy(creator.getId())
                 .build();
 
         return buildUserResponse(userRepository.save(user));
@@ -83,7 +91,7 @@ public class UserService {
 
         Page<User> users = switch (authenticatedUser.getHierarchyRole()) {
             case SUPER_ADMIN -> userRepository.findByHierarchyRoleNot(HierarchyRole.SUPER_ADMIN, pageable);
-            case ADMIN -> userRepository.findByCreatedBy(authenticatedUser.getId(), pageable);
+            case ADMIN -> userRepository.findSubtreeOf(authenticatedUser.getId(), pageable);
             default -> Page.empty(pageable);
         };
 
@@ -147,7 +155,10 @@ public class UserService {
             throw new AccessDeniedException("No tenés permisos para modificar los subroles de este usuario");
         }
 
-        currentUser.getSubroles().add(getSubRoleByName(subrolName));
+        SubRole subRole = getSubRoleByName(subrolName);
+        validateCanDelegateSubrole(authenticatedUser, subRole);
+
+        currentUser.getSubroles().add(subRole);
         setUpdaterUser(currentUser);
     }
 
@@ -199,11 +210,14 @@ public class UserService {
 
     // ──────────── AUTHORIZATION ────────────
 
+     //La jerarquía define sobre quién se puede operar:
+     //el superadmin gestiona a todos menos a sus pares, y un admin gestiona
+     //su propio subárbol (lo que creó él y lo que crearon sus creaciones).
     private boolean canManage(User authenticatedUser, User currentUser) {
         return switch (authenticatedUser.getHierarchyRole()) {
             case SUPER_ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN;
-            case ADMIN -> currentUser.getHierarchyRole() == HierarchyRole.USER
-                    && authenticatedUser.getId().equals(currentUser.getCreatedBy());
+            case ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN
+                    && isInSubtreeOf(authenticatedUser, currentUser);
             default -> false;
         };
     }
@@ -216,6 +230,75 @@ public class UserService {
             return false;   // los superadministradores no se dan de baja
         }
         return canManage(authenticatedUser, currentUser);
+    }
+
+    //Dos niveles: hijo directo o nieto. El intermedio puede estar dado de baja
+    private boolean isInSubtreeOf(User authenticatedUser, User currentUser) {
+        Long creatorId = currentUser.getCreatedBy();
+
+        if (creatorId == null) {
+            return false;
+        }
+        if (authenticatedUser.getId().equals(creatorId)) {
+            return true;
+        }
+        return userRepository.findByIdIncludingDeleted(creatorId)
+                .map(creator -> authenticatedUser.getId().equals(creator.getCreatedBy()))
+                .orElse(false);
+    }
+
+    private void validateCanRegister(User creator, boolean canChooseAny, HierarchyRole requestedRole) {
+        boolean allowed = switch (creator.getHierarchyRole()) {
+            case SUPER_ADMIN -> true;
+            case ADMIN -> requestedRole == HierarchyRole.USER
+                    || (requestedRole == HierarchyRole.ADMIN && canChooseAny);
+            default -> false;
+        };
+
+        if (!allowed) {
+            throw new AccessDeniedException("No tenés permisos para crear un usuario con ese rol");
+        }
+    }
+
+    private boolean isFirstLevelAdmin(User admin) {
+        Long creatorId = admin.getCreatedBy();
+
+        if (creatorId == null) {
+            return false;
+        }
+        return userRepository.findByIdIncludingDeleted(creatorId)
+                .map(creator -> creator.getHierarchyRole() == HierarchyRole.SUPER_ADMIN)
+                .orElse(false);
+    }
+
+    //Nadie puede otorgar un acceso que no posee, salvo el superadmin
+    private void validateCanDelegateSubrole(User assigner, SubRole subrole) {
+        if (assigner.getHierarchyRole() == HierarchyRole.SUPER_ADMIN) {
+            return;
+        }
+        boolean hasSubrole = assigner.getSubroles().stream()
+                .anyMatch(owned -> owned.getName().equals(subrole.getName()));
+
+        if (!hasSubrole) {
+            throw new AccessDeniedException("No podés asignar un subrol que no tenés");
+        }
+    }
+
+    // ──────────── DELEGATION ────────────
+
+
+     // El superadmin y el admin de primer nivel eligen la delegación del usuario
+     // nuevo; el admin de segundo nivel solo puede crear en la suya.
+     // Es obligatoria salvo que el usuario creado sea superadmin.
+    private Delegation resolveDelegationForNewUser(User creator, boolean canChooseAny, RegisterRequest request) {
+        Delegation delegation = (canChooseAny && request.getDelegation() != null)
+                ? request.getDelegation()
+                : creator.getDelegation();
+
+        if (delegation == null && request.getHierarchyRole() != HierarchyRole.SUPER_ADMIN) {
+            throw new InvalidUserDataException("Debe indicarse una delegación para el usuario");
+        }
+        return delegation;
     }
 
     // ──────────── AUDIT METADATA ────────────

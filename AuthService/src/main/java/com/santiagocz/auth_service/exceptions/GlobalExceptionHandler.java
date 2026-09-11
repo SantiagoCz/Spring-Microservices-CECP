@@ -130,6 +130,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
+    @ExceptionHandler(InvalidUserDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidUserData(InvalidUserDataException ex,
+                                                               HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.badRequest().body(body);
+    }
+
     // ──────────── 500 ────────────
 
     @ExceptionHandler(Exception.class)

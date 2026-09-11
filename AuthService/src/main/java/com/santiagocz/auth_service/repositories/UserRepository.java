@@ -28,4 +28,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByCreatedBy(Long createdBy, Pageable pageable);
 
     Page<User> findByHierarchyRoleNot(HierarchyRole hierarchyRole, Pageable pageable);
+
+    @Query(value = "SELECT * FROM users u WHERE u.deleted_at IS NULL AND (" +
+            "u.created_by = :adminId OR u.created_by IN " +
+            "(SELECT c.id FROM users c WHERE c.created_by = :adminId))",
+            countQuery = "SELECT count(*) FROM users u WHERE u.deleted_at IS NULL AND (" +
+                    "u.created_by = :adminId OR u.created_by IN " +
+                    "(SELECT c.id FROM users c WHERE c.created_by = :adminId))",
+            nativeQuery = true)
+    Page<User> findSubtreeOf(@Param("adminId") Long adminId, Pageable pageable);
 }
