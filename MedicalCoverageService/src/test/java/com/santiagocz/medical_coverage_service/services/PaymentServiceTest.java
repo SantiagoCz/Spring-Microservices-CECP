@@ -757,7 +757,7 @@ class PaymentServiceTest {
             PaymentUpdateDto dto = defaultPaymentUpdateDto();
             dto.setDate(yesterday);
             dto.setAmount(newAmount);
-            dto.setDiscount(newDiscount);
+            dto.setDiscountPercentage(newDiscount);
             when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
 
             // When
@@ -767,7 +767,7 @@ class PaymentServiceTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(payment.getDate()).isEqualTo(yesterday);
                 softly.assertThat(payment.getAmount()).isEqualTo(newAmount);
-                softly.assertThat(payment.getDiscount()).isEqualTo(newDiscount);
+                softly.assertThat(payment.getDiscountPercentage()).isEqualTo(newDiscount);
                 softly.assertThat(payment.getDiscountAmount()).isEqualTo(2500.0, within(0.001));
             });
 
@@ -915,7 +915,7 @@ class PaymentServiceTest {
     private PaymentRequestDto requestWithDiscount(Double amount, Integer discount) {
         PaymentRequestDto dto = defaultPaymentDto();
         dto.setAmount(amount);
-        dto.setDiscount(discount);
+        dto.setDiscountPercentage(discount);
         return dto;
     }
 
@@ -935,7 +935,7 @@ class PaymentServiceTest {
         PaymentRequestDto dto = new PaymentRequestDto();
         dto.setDate(date);
         dto.setAmount(amount);
-        dto.setDiscount(discount);
+        dto.setDiscountPercentage(discount);
         dto.setAffiliateId(affiliateId);
         dto.setDelegation(delegation);
         dto.setMedicalOrderDto(medicalOrderDto);
@@ -946,7 +946,7 @@ class PaymentServiceTest {
         PaymentUpdateDto dto = new PaymentUpdateDto();
         dto.setDate(date);
         dto.setAmount(amount);
-        dto.setDiscount(discount);
+        dto.setDiscountPercentage(discount);
         dto.setMedicalOrderDto(medicalOrderDto);
         return dto;
     }

@@ -19,8 +19,9 @@ public class PaymentUpdateDto {
     @Positive(message = "El valor debe ser un número positivo")
     private Double amount;
 
+    @NotNull(message = "El porcentaje de descuento es obligatorio")
     @PositiveOrZero(message = "El porcentaje de descuento no puede ser negativo")
-    private Integer discount;
+    private Integer discountPercentage;
 
     @Valid
     @NotNull(message = "Los datos de la orden médica son obligatorios")

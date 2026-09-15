@@ -27,8 +27,8 @@ public class Payment extends Auditable {
     @Column(nullable = false)
     private Double amount;
 
-    @Column
-    private Integer discount;
+    @Column(nullable = false)
+    private Integer discountPercentage;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

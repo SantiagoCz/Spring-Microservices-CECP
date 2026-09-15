@@ -113,8 +113,8 @@ public class PaymentService {
 
         payment.setDate(dto.getDate());
         payment.setAmount(dto.getAmount());
-        payment.setDiscount(dto.getDiscount());
-        payment.setDiscountAmount(calculateDiscountAmount(dto.getAmount(), dto.getDiscount()));
+        payment.setDiscountPercentage(dto.getDiscountPercentage());
+        payment.setDiscountAmount(calculateDiscountAmount(dto.getAmount(), dto.getDiscountPercentage()));
 
         return buildResponseDto(payment);
     }
@@ -242,8 +242,8 @@ public class PaymentService {
         return Payment.builder()
                 .date(dto.getDate())
                 .amount(dto.getAmount())
-                .discount(dto.getDiscount())
-                .discountAmount(calculateDiscountAmount(dto.getAmount(), dto.getDiscount()))
+                .discountPercentage(dto.getDiscountPercentage())
+                .discountAmount(calculateDiscountAmount(dto.getAmount(), dto.getDiscountPercentage()))
                 .status(Status.ACTIVE)
                 .affiliateId(dto.getAffiliateId())
                 .delegation(delegation)
@@ -252,7 +252,7 @@ public class PaymentService {
     }
 
     private Double calculateDiscountAmount(Double amount, Integer discount) {
-        if (discount == null || discount == 0) {
+        if (discount == 0) {
             return 0.0;
         }
         return amount * (discount / 100.0);
@@ -265,7 +265,7 @@ public class PaymentService {
                 .id(payment.getId())
                 .date(payment.getDate())
                 .amount(payment.getAmount())
-                .discount(payment.getDiscount())
+                .discount(payment.getDiscountPercentage())
                 .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .affiliateId(payment.getAffiliateId())
@@ -279,7 +279,7 @@ public class PaymentService {
                 .id(payment.getId())
                 .date(payment.getDate())
                 .amount(payment.getAmount())
-                .discount(payment.getDiscount())
+                .discount(payment.getDiscountPercentage())
                 .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .affiliate(affiliate)
@@ -296,7 +296,7 @@ public class PaymentService {
                 .affiliateDni(affiliate != null ? affiliate.getDni() : null)
                 .affiliateFullName(affiliate != null ? affiliate.getFirstName() + " " + affiliate.getLastName() : null)
                 .amount(payment.getAmount())
-                .discount(payment.getDiscount())
+                .discount(payment.getDiscountPercentage())
                 .discountAmount(payment.getDiscountAmount())
                 .status(payment.getStatus())
                 .build();
