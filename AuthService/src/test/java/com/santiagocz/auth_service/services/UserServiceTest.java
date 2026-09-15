@@ -77,8 +77,8 @@ class UserServiceTest {
     // ──────────── AUTHENTICATED USER ────────────
 
     @Nested
-    @DisplayName("usuario autenticado")
-    class AuthenticatedUser {
+    @DisplayName("Authentication")
+    class Authentication {
 
         @Test
         @DisplayName("Falla si no hay nadie autenticado")
@@ -159,6 +159,22 @@ class UserServiceTest {
 
             // When / Then
             assertThatThrownBy(() -> userService.registerUser(registerRequestFor(HierarchyRole.ADMIN, DEFAULT_DELEGATION)))
+                    .isInstanceOf(AccessDeniedException.class);
+
+            verifyNoInteractions(personRepository);
+        }
+
+        @Test
+        @DisplayName("Un admin no puede crear un superadmin")
+        void shouldThrowAccessDenied_whenAdminCreatesSuperAdmin() {
+            // Given
+            authenticateAs(firstLevelAdmin());
+            when(userRepository.findByIdIncludingDeleted(SUPER_ADMIN_ID))
+                    .thenReturn(Optional.of(superAdmin()));
+
+            // When / Then
+            assertThatThrownBy(() -> userService.registerUser(
+                    registerRequestFor(HierarchyRole.SUPER_ADMIN, DEFAULT_DELEGATION)))
                     .isInstanceOf(AccessDeniedException.class);
 
             verifyNoInteractions(personRepository);
@@ -675,7 +691,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Un superadmin puede resetear la contraseña de un usuario que no creó")
-        void shouldResetPassword_whenSuperAdminNotManagesUser() {
+        void shouldResetPassword_whenSuperAdminResetsAnyUser() {
             // Given
             authenticateAs(superAdmin());
             User user = userCreatedBy(ADMIN_ID);
@@ -859,8 +875,8 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("Quita el subrol del usuario")
-        void shouldRemoveSubrole_whenCallerManagesUser() {
+        @DisplayName("Un admin puede quitar un subrol que él no tiene")
+        void shouldRemoveSubrole_whenCallerDoesNotOwnIt() {
             // Given
             authenticateAs(firstLevelAdmin());
 
@@ -897,6 +913,18 @@ class UserServiceTest {
 
             // When / Then
             assertThatThrownBy(() -> userService.deleteUser(ADMIN_ID))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Un superadmin no puede darse de baja a sí mismo")
+        void shouldThrowAccessDenied_whenSuperAdminDeletesThemselves() {
+            // Given
+            authenticateAs(superAdmin());
+            when(userRepository.findById(SUPER_ADMIN_ID)).thenReturn(Optional.of(superAdmin()));
+
+            // When / Then
+            assertThatThrownBy(() -> userService.deleteUser(SUPER_ADMIN_ID))
                     .isInstanceOf(AccessDeniedException.class);
         }
 
