@@ -1,5 +1,6 @@
 package com.santiagocz.auth_service.services;
 
+import com.santiagocz.auth_service.exceptions.*;
 import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.auth_service.domain.entities.Person;
 import com.santiagocz.auth_service.domain.entities.SubRole;
@@ -10,11 +11,6 @@ import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
 import com.santiagocz.auth_service.dto.response.PageResponse;
 import com.santiagocz.auth_service.dto.response.PersonResponse;
 import com.santiagocz.auth_service.dto.response.UserResponse;
-import com.santiagocz.auth_service.exceptions.InvalidPasswordException;
-import com.santiagocz.auth_service.exceptions.InvalidUserDataException;
-import com.santiagocz.auth_service.exceptions.SubRoleNotFoundException;
-import com.santiagocz.auth_service.exceptions.UserAlreadyExistsException;
-import com.santiagocz.auth_service.exceptions.UserNotFoundException;
 import com.santiagocz.auth_service.repositories.PersonRepository;
 import com.santiagocz.auth_service.repositories.SubRoleRepository;
 import com.santiagocz.auth_service.repositories.UserRepository;
@@ -51,6 +47,7 @@ public class UserService {
 
         validateCanRegister(creator, canChooseAny, request.getHierarchyRole());
         validateDniNotInUse(request.getPerson().getDni());
+        Delegation delegation = resolveDelegationForNewUser(creator, canChooseAny, request);
 
         Person person = personRepository.save(Person.builder()
                 .dni(request.getPerson().getDni())
@@ -64,7 +61,7 @@ public class UserService {
                 .username(request.getPerson().getDni())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .hierarchyRole(request.getHierarchyRole())
-                .delegation(resolveDelegationForNewUser(creator, canChooseAny, request))
+                .delegation(delegation)
                 .person(person)
                 .createdBy(creator.getId())
                 .build();
@@ -202,6 +199,8 @@ public class UserService {
             throw new AccessDeniedException("No tenés permisos para dar de alta a este usuario");
         }
 
+        validateIsInactive(currentUser);
+
         currentUser.setEnabled(true);
         currentUser.setDeletedAt(null);
         currentUser.setDeletedBy(null);
@@ -210,12 +209,13 @@ public class UserService {
 
     // ──────────── AUTHORIZATION ────────────
 
-     //La jerarquía define sobre quién se puede operar:
-     //el superadmin gestiona a todos menos a sus pares, y un admin gestiona
-     //su propio subárbol (lo que creó él y lo que crearon sus creaciones).
+    // La jerarquía define sobre quién se puede operar:
+    // el superadmin gestiona a todos, y a sus pares solo si él los creó;
+    // un admin gestiona su propio subárbol (lo que creó él y lo que crearon sus creaciones).
     private boolean canManage(User authenticatedUser, User currentUser) {
         return switch (authenticatedUser.getHierarchyRole()) {
-            case SUPER_ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN;
+            case SUPER_ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN
+                    || authenticatedUser.getId().equals(currentUser.getCreatedBy());
             case ADMIN -> currentUser.getHierarchyRole() != HierarchyRole.SUPER_ADMIN
                     && isInSubtreeOf(authenticatedUser, currentUser);
             default -> false;
@@ -225,9 +225,6 @@ public class UserService {
     private boolean canDelete(User authenticatedUser, User currentUser) {
         if (authenticatedUser.getId().equals(currentUser.getId())) {
             return false;   // nadie se da de baja a sí mismo
-        }
-        if (currentUser.getHierarchyRole() == HierarchyRole.SUPER_ADMIN) {
-            return false;   // los superadministradores no se dan de baja
         }
         return canManage(authenticatedUser, currentUser);
     }
@@ -286,7 +283,6 @@ public class UserService {
 
     // ──────────── DELEGATION ────────────
 
-
      // El superadmin y el admin de primer nivel eligen la delegación del usuario
      // nuevo; el admin de segundo nivel solo puede crear en la suya.
      // Es obligatoria salvo que el usuario creado sea superadmin.
@@ -318,6 +314,12 @@ public class UserService {
     private void validateDniNotInUse(String dni) {
         if (userRepository.existsByUsername(dni)) {
             throw new UserAlreadyExistsException("El usuario con DNI " + dni + " ya existe");
+        }
+    }
+
+    private void validateIsInactive(User currentUser) {
+        if (Boolean.TRUE.equals(currentUser.getEnabled())) {
+            throw new UserConflictException("El usuario ya está activo.");
         }
     }
 

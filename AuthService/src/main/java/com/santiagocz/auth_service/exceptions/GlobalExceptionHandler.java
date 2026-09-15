@@ -57,6 +57,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(UserConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(UserConflictException ex,
+                                                        HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     // ──────────── 401 - 403 ────────────
 
     @ExceptionHandler(InvalidCredentialsException.class)
