@@ -77,6 +77,32 @@ public class BlockedPeriodService {
         return buildResponseDto(blockedPeriod, cancelAffectedAppointments(blockedPeriod));
     }
 
+    @Transactional
+    public BlockedPeriodResponseDto extend(Long id, LocalDate newEndDate) {
+        BlockedPeriod blockPeriod = getEntityById(id);
+        LocalDate currentEnd = blockPeriod.getEndDate();
+
+        if (currentEnd.isBefore(LocalDate.now())) {
+            throw new EntityConflictException(
+                    "El período ya finalizó; creá uno nuevo");
+        }
+        if (!newEndDate.isAfter(currentEnd)) {
+            throw new EntityConflictException(
+                    "La nueva fecha de fin debe ser posterior a la actual (" + currentEnd + ")");
+        }
+
+        LocalDate tailStart = currentEnd.plusDays(1);
+        Long professionalId = (blockPeriod.getProfessional() == null) ? null : blockPeriod.getProfessional().getId();
+
+        validateNoOverlap(professionalId, tailStart, newEndDate,
+                blockPeriod.getStartTime(), blockPeriod.getEndTime(), id);
+
+        blockPeriod.setEndDate(newEndDate);
+
+        return buildResponseDto(blockPeriod,
+                cancelAffectedAppointments(blockPeriod, tailStart, newEndDate));
+    }
+
     // ──────────── DELETE ────────────
 
     @Transactional
@@ -113,14 +139,18 @@ public class BlockedPeriodService {
 
     // Cancela los turnos que caen dentro del bloqueo y devuelve cuántos fueron. (create y update)
     private int cancelAffectedAppointments(BlockedPeriod block) {
+        return cancelAffectedAppointments(block, block.getStartDate(), block.getEndDate());
+    }
+
+    private int cancelAffectedAppointments(BlockedPeriod block, LocalDate from, LocalDate to) {
         Long professionalId = (block.getProfessional() == null)
                 ? null
                 : block.getProfessional().getId();
 
         List<Appointment> candidates = appointmentRepository.findActiveInRange(
                 professionalId, ACTIVE_STATUSES,
-                block.getStartDate().atStartOfDay(),
-                block.getEndDate().atTime(LocalTime.MAX));
+                from.atStartOfDay(),
+                to.atTime(LocalTime.MAX));
 
         // Bloqueo de día completo: caen todos. Parcial: solo los que pisan la franja.
         List<Appointment> affected = (block.getStartTime() == null)
@@ -169,4 +199,5 @@ public class BlockedPeriodService {
                 .reason(dto.getReason())
                 .build();
     }
+
 }

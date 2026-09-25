@@ -6,11 +6,13 @@ import com.santiagocz.appointments_service.services.BlockedPeriodService;
 import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -51,6 +53,13 @@ public class BlockedPeriodController {
             @PathVariable Long id,
             @Valid @RequestBody BlockedPeriodRequestDto dto) {
         return ResponseEntity.ok(blockedPeriodService.update(id, dto));
+    }
+
+    @PatchMapping("/{id}/extend")
+    public ResponseEntity<BlockedPeriodResponseDto> extend(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(blockedPeriodService.extend(id, endDate));
     }
 
     // ──────────── DELETE ────────────
