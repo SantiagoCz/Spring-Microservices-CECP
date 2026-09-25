@@ -49,8 +49,8 @@ public class AppointmentService {
 
         // 1. El turno tiene que caer dentro de un horario en que el profesional atiende
         validateWithinSchedule(professional.getId(), start, end);
-        // 2. Verificar que no sea feriado, vacaciones, etc.
-        validateDateAvailable(professional.getId(), start.toLocalDate());
+        // 2. Verificar que la franja no esté bloqueada (feriado, vacaciones, ausencia)
+        validateSlotAvailable(professional.getId(), start, end);
         // 3. Capacidad: solo se valida para REGULAR; el sobreturno la saltea
         if (dto.getType() == AppointmentType.REGULAR) {
             validateCapacity(professional, start, end, null);
@@ -129,8 +129,10 @@ public class AppointmentService {
         LocalDateTime start = dto.getStartDateTime();
         LocalDateTime end = start.plusMinutes(dto.getDurationMinutes());
 
+        // 1. El turno tiene que caer dentro de un horario en que el profesional atiende
         validateWithinSchedule(professional.getId(), start, end);
-        validateDateAvailable(professional.getId(), start.toLocalDate());
+        // 2. Verificar que la franja no esté bloqueada (feriado, vacaciones, ausencia)
+        validateSlotAvailable(professional.getId(), start, end);
 
         if (dto.getType() == AppointmentType.REGULAR) {
             validateCapacity(professional, start, end, appointment.getId());
@@ -227,10 +229,11 @@ public class AppointmentService {
         }
     }
 
-    private void validateDateAvailable(Long professionalId, LocalDate date) {
-        if (blockedPeriodRepository.existsBlockOnDate(professionalId, date)) {
+    private void validateSlotAvailable(Long professionalId, LocalDateTime start, LocalDateTime end) {
+        if (blockedPeriodRepository.existsBlockInSlot(
+                professionalId, start.toLocalDate(), start.toLocalTime(), end.toLocalTime())) {
             throw new EntityConflictException(
-                    "El profesional no atiende ese día.");
+                    "El profesional no está disponible en ese horario (feriado, vacaciones o ausencia)");
         }
     }
 

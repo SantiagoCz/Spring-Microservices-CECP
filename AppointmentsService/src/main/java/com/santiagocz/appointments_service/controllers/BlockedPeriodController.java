@@ -1,6 +1,7 @@
 package com.santiagocz.appointments_service.controllers;
 
 import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodRequestDto;
+import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodResponseDto;
 import com.santiagocz.appointments_service.services.BlockedPeriodService;
 import com.santiagocz.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -8,10 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/blocked-periods")
@@ -21,14 +21,45 @@ public class BlockedPeriodController {
 
     private final BlockedPeriodService blockedPeriodService;
 
+    // ──────────── CREATE ────────────
+
     @PostMapping
-    public ResponseEntity<ApiResponse> create(@Valid @RequestBody BlockedPeriodRequestDto dto) {
-        int canceled = blockedPeriodService.blockPeriod(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse(HttpStatus.CREATED.value(),
-                        "Período bloqueado. Se cancelaron " + canceled + " turnos."));
+    public ResponseEntity<BlockedPeriodResponseDto> create(
+            @Valid @RequestBody BlockedPeriodRequestDto dto) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(blockedPeriodService.create(dto));
     }
 
-    //TODO: faltan los metodos read, update, y delete
+    // ──────────── READ ────────────
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BlockedPeriodResponseDto> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(blockedPeriodService.findById(id));
+    }
+
+    @GetMapping("/professional/{professionalId}")
+    public ResponseEntity<List<BlockedPeriodResponseDto>> findUpcomingForProfessional(
+            @PathVariable Long professionalId) {
+        return ResponseEntity.ok(blockedPeriodService.findUpcomingForProfessional(professionalId));
+    }
+
+    // ──────────── UPDATE ────────────
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BlockedPeriodResponseDto> update(
+            @PathVariable Long id,
+            @Valid @RequestBody BlockedPeriodRequestDto dto) {
+        return ResponseEntity.ok(blockedPeriodService.update(id, dto));
+    }
+
+    // ──────────── DELETE ────────────
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+        blockedPeriodService.delete(id);
+        return ResponseEntity.ok(
+                new ApiResponse(HttpStatus.OK.value(), "Se ha eliminado correctamente."));
+    }
 
 }

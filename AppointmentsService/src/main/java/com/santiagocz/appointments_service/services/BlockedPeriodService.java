@@ -5,6 +5,7 @@ import com.santiagocz.appointments_service.domain.entities.BlockedPeriod;
 import com.santiagocz.appointments_service.domain.entities.Professional;
 import com.santiagocz.appointments_service.domain.enums.AppointmentStatus;
 import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodRequestDto;
+import com.santiagocz.appointments_service.dto.blockePeriod.BlockedPeriodResponseDto;
 import com.santiagocz.appointments_service.repositories.*;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
@@ -28,43 +29,144 @@ public class BlockedPeriodService {
     private static final Set<AppointmentStatus> ACTIVE_STATUSES =
             Set.of(AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED);
 
+    // ──────────── CREATE ────────────
+
     @Transactional
-    public int blockPeriod(BlockedPeriodRequestDto dto) {
+    public BlockedPeriodResponseDto create(BlockedPeriodRequestDto dto) {
+        Professional professional = resolveProfessional(dto.getProfessionalId());
 
-        Long professionalId = dto.getProfessionalId();
-        LocalDate startDate = dto.getStartDate();
-        LocalDate endDate = dto.getEndDate();
-        String reason = dto.getReason();
+        validateNoOverlap(dto.getProfessionalId(), dto.getStartDate(), dto.getEndDate(),
+                dto.getStartTime(), dto.getEndTime(), null);
 
-        Professional professional = (professionalId == null) ? null
-                : professionalRepository.findById(professionalId)
+        BlockedPeriod blockedPeriod = blockedPeriodRepository.save(buildEntity(dto, professional));
+
+        return buildResponseDto(blockedPeriod, cancelAffectedAppointments(blockedPeriod));
+    }
+
+    // ──────────── READ ────────────
+
+    @Transactional(readOnly = true)
+    public BlockedPeriodResponseDto findById(Long id) {
+        return buildResponseDto(getEntityById(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BlockedPeriodResponseDto> findUpcomingForProfessional(Long professionalId) {
+        return blockedPeriodRepository
+                .findUpcomingForProfessional(professionalId, LocalDate.now())
+                .stream().map(this::buildResponseDto).toList();
+    }
+
+    // ──────────── UPDATE ────────────
+
+    @Transactional
+    public BlockedPeriodResponseDto update(Long id, BlockedPeriodRequestDto dto) {
+        BlockedPeriod blockedPeriod = getEntityById(id);
+        Professional professional = resolveProfessional(dto.getProfessionalId());
+
+        validateNoOverlap(dto.getProfessionalId(), dto.getStartDate(), dto.getEndDate(),
+                dto.getStartTime(), dto.getEndTime(), id);
+
+        blockedPeriod.setProfessional(professional);
+        blockedPeriod.setStartDate(dto.getStartDate());
+        blockedPeriod.setEndDate(dto.getEndDate());
+        blockedPeriod.setStartTime(dto.getStartTime());
+        blockedPeriod.setEndTime(dto.getEndTime());
+        blockedPeriod.setReason(dto.getReason());
+
+        return buildResponseDto(blockedPeriod, cancelAffectedAppointments(blockedPeriod));
+    }
+
+    // ──────────── DELETE ────────────
+
+    @Transactional
+    public void delete(Long id) {
+        BlockedPeriod blockedPeriod = getEntityById(id);
+        blockedPeriodRepository.delete(blockedPeriod);
+    }
+
+    // ──────────── PRIVATES ────────────
+
+    private BlockedPeriod getEntityById(Long id) {
+        return blockedPeriodRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("No se encontró el periodo con ID: " + id));
+    }
+
+    // professionalId null = feriado: el bloqueo aplica a todos
+    private Professional resolveProfessional(Long professionalId) {
+        if (professionalId == null) {
+            return null;
+        }
+        return professionalRepository.findById(professionalId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "No se encontró el profesional con ID: " + professionalId));
+                        "No se encontró al profesional con ID: " + professionalId));
+    }
 
-        if (blockedPeriodRepository.existsOverlappingBlock(professionalId, startDate, endDate)) {
+    private void validateNoOverlap(Long professionalId, LocalDate startDate, LocalDate endDate,
+                                   LocalTime startTime, LocalTime endTime, Long excludedId) {
+        if (blockedPeriodRepository.existsOverlappingBlock(
+                professionalId, startDate, endDate, startTime, endTime, excludedId)) {
             throw new EntityConflictException(
                     "Ya existe un bloqueo que se superpone con ese período");
         }
+    }
 
-        blockedPeriodRepository.save(BlockedPeriod.builder()
-                .professional(professional)
-                .startDate(startDate)
-                .endDate(endDate)
-                .reason(reason)
-                .build());
+    // Cancela los turnos que caen dentro del bloqueo y devuelve cuántos fueron. (create y update)
+    private int cancelAffectedAppointments(BlockedPeriod block) {
+        Long professionalId = (block.getProfessional() == null)
+                ? null
+                : block.getProfessional().getId();
 
-        List<Appointment> affected = appointmentRepository.findActiveInRange(
+        List<Appointment> candidates = appointmentRepository.findActiveInRange(
                 professionalId, ACTIVE_STATUSES,
-                startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+                block.getStartDate().atStartOfDay(),
+                block.getEndDate().atTime(LocalTime.MAX));
+
+        // Bloqueo de día completo: caen todos. Parcial: solo los que pisan la franja.
+        List<Appointment> affected = (block.getStartTime() == null)
+                ? candidates
+                : candidates.stream()
+                .filter(a -> a.getStartDateTime().toLocalTime().isBefore(block.getEndTime())
+                        && a.getEndDateTime().toLocalTime().isAfter(block.getStartTime()))
+                .toList();
 
         for (Appointment appointment : affected) {
             appointment.setStatus(AppointmentStatus.CANCELED);
             // TODO: avisar al paciente del turno cancelado (WhatsApp / asistente)
         }
-
         return affected.size();
     }
 
-    //TODO: faltan los metodos read, update, y delete
+    // Mappers
+    private BlockedPeriodResponseDto buildResponseDto(BlockedPeriod blockedPeriod) {
+        return buildResponseDto(blockedPeriod, null);
+    }
 
+    private BlockedPeriodResponseDto buildResponseDto(BlockedPeriod blockedPeriod,
+                                                      Integer totalAffectedAppointments) {
+        Professional professional = blockedPeriod.getProfessional();
+        return BlockedPeriodResponseDto.builder()
+                .id(blockedPeriod.getId())
+                .professionalId(professional == null ? null : professional.getId())
+                .professionalName(professional == null ? null
+                        : professional.getFirstName() + " " + professional.getLastName())
+                .startDate(blockedPeriod.getStartDate())
+                .endDate(blockedPeriod.getEndDate())
+                .startTime(blockedPeriod.getStartTime())
+                .endTime(blockedPeriod.getEndTime())
+                .reason(blockedPeriod.getReason())
+                .totalAffectedAppointments(totalAffectedAppointments)
+                .build();
+    }
+
+    private BlockedPeriod buildEntity(BlockedPeriodRequestDto dto, Professional professional) {
+        return BlockedPeriod.builder()
+                .professional(professional)
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .reason(dto.getReason())
+                .build();
+    }
 }
