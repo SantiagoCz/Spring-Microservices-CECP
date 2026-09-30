@@ -261,12 +261,13 @@ class UserServiceTest {
             User creator = superAdmin();
             creator.setDelegation(null);
             authenticateAs(creator);
+            when(personRepository.existsByDni(any())).thenReturn(false);
 
             // When / Then
             assertThatThrownBy(() -> userService.registerUser(registerRequestFor(HierarchyRole.ADMIN, null)))
                     .isInstanceOf(InvalidUserDataException.class);
 
-            verifyNoInteractions(personRepository);
+            verify(personRepository, never()).save(any());
         }
 
         @Test
@@ -303,6 +304,23 @@ class UserServiceTest {
                     .isInstanceOf(UserAlreadyExistsException.class);
 
             verifyNoInteractions(personRepository);
+        }
+
+        @Test
+        @DisplayName("No se puede registrar con el DNI de un usuario eliminado")
+        void shouldThrowAlreadyExists_whenDniBelongsToDeletedUser() {
+            // Given
+            // @Where esconde al usuario borrado, pero su Person sigue en la base
+            authenticateAs(superAdmin());
+            when(userRepository.existsByUsername(DEFAULT_DNI)).thenReturn(false);
+            when(personRepository.existsByDni(DEFAULT_DNI)).thenReturn(true);
+
+            // When / Then
+            assertThatThrownBy(() -> userService.registerUser(
+                    registerRequestFor(HierarchyRole.USER, DEFAULT_DELEGATION)))
+                    .isInstanceOf(UserAlreadyExistsException.class);
+
+            verify(personRepository, never()).save(any());
         }
 
         @Test

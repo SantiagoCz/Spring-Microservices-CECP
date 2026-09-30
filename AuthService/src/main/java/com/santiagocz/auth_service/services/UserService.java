@@ -312,7 +312,7 @@ public class UserService {
     }
 
     private void validateDniNotInUse(String dni) {
-        if (userRepository.existsByUsername(dni)) {
+        if (userRepository.existsByUsername(dni) || personRepository.existsByDni(dni)) {
             throw new UserAlreadyExistsException("El usuario con DNI " + dni + " ya existe");
         }
     }
