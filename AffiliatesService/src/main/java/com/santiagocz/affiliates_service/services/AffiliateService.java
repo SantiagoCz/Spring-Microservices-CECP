@@ -8,6 +8,7 @@ import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
+import com.santiagocz.affiliates_service.repositories.PayslipRepository;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.Set;
 public class AffiliateService {
 
     private final AffiliateRepository affiliateRepository;
+    private final PayslipRepository payslipRepository;
     private final AffiliateMapper mapper;
 
     // ──────────── CREATE ────────────
@@ -83,14 +85,7 @@ public class AffiliateService {
 
     @Transactional(readOnly = true)
     public AffiliateResponseDto getById(Long id) {
-        return mapper.toResponse(getAffiliateById(id));
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isActive(Long id) {
-        return affiliateRepository.findById(id)
-                .map(affiliate -> affiliate.getStatus() == Status.ACTIVE)
-                .orElse(false);
+        return withLastPayslipPeriod(getAffiliateById(id));
     }
 
     @Transactional(readOnly = true)
@@ -98,7 +93,14 @@ public class AffiliateService {
         Affiliate affiliate = affiliateRepository.findByDni(dni)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "No se encontró afiliado con DNI: " + dni));
-        return mapper.toResponse(affiliate);
+        return withLastPayslipPeriod(affiliate);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isActive(Long id) {
+        return affiliateRepository.findById(id)
+                .map(affiliate -> affiliate.getStatus() == Status.ACTIVE)
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -131,10 +133,7 @@ public class AffiliateService {
 
     @Transactional(readOnly = true)
     public List<AffiliateResponseDto> getFamilyGroup(Long affiliateId) {
-        Affiliate affiliate = getAffiliateById(affiliateId);
-        Long primaryId = (affiliate.getAffiliateType() == AffiliateType.PRIMARY)
-                ? affiliate.getId()
-                : affiliate.getPrimaryAffiliate().getId();
+        Long primaryId = primaryIdOf(getAffiliateById(affiliateId));
         return affiliateRepository.findFamilyGroupByPrimaryId(primaryId)
                 .stream().map(mapper::toResponse).toList();
     }
@@ -251,6 +250,20 @@ public class AffiliateService {
             throw new EntityConflictException(
                     "El titular está inactivo, no se puede agregar grupo familiar");
         }
+    }
+
+    private AffiliateResponseDto withLastPayslipPeriod(Affiliate affiliate) {
+        AffiliateResponseDto dto = mapper.toResponse(affiliate);
+        payslipRepository.findTopByPrimaryAffiliate_IdOrderByPeriodDesc(primaryIdOf(affiliate))
+                .ifPresent(payslip -> dto.setPeriodLastPayslip(payslip.getPeriod()));
+        return dto;
+    }
+
+    // Un familiar no tiene recibos propios: los del grupo son del titular
+    private Long primaryIdOf(Affiliate affiliate) {
+        return (affiliate.getAffiliateType() == AffiliateType.PRIMARY)
+                ? affiliate.getId()
+                : affiliate.getPrimaryAffiliate().getId();
     }
 
     private String formatWords(String text) {

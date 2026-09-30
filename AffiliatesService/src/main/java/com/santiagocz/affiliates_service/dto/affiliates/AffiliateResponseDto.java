@@ -24,6 +24,9 @@ public class AffiliateResponseDto {
     private Status status;
     private AffiliateType affiliateType;
 
+    // Sólo en la consulta individual. Ausente = el titular no tiene recibos cargados
+    private LocalDate periodLastPayslip;
+
     // Sólo presentes si es DEPENDENT
     private RelationType relation;
     private PrimarySummaryDto primaryAffiliate;

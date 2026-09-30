@@ -2,6 +2,7 @@ package com.santiagocz.affiliates_service.services;
 
 import com.santiagocz.affiliates_service.component.AffiliateMapper;
 import com.santiagocz.affiliates_service.domain.entities.Affiliate;
+import com.santiagocz.affiliates_service.domain.entities.Payslip;
 import com.santiagocz.affiliates_service.domain.enums.AffiliateType;
 import com.santiagocz.affiliates_service.domain.enums.RelationType;
 import com.santiagocz.affiliates_service.domain.enums.Status;
@@ -9,6 +10,7 @@ import com.santiagocz.affiliates_service.dto.affiliates.AffiliateRequestDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateResponseDto;
 import com.santiagocz.affiliates_service.dto.affiliates.AffiliateSummaryDto;
 import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
+import com.santiagocz.affiliates_service.repositories.PayslipRepository;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
 import org.assertj.core.api.SoftAssertions;
@@ -41,6 +43,8 @@ class AffiliateServiceTest {
 
     @Mock
     private AffiliateRepository affiliateRepository;
+    @Mock
+    private PayslipRepository payslipRepository;
     @Spy
     private AffiliateMapper mapper = new AffiliateMapper();
     @InjectMocks
@@ -345,6 +349,37 @@ class AffiliateServiceTest {
 
             // Then
             assertThat(result.getId()).isEqualTo(PRIMARY_ID);
+        }
+
+        @Test
+        @DisplayName("Informa el período del último recibo del titular")
+        void shouldExposeLastPayslipPeriod() {
+            // Given
+            LocalDate period = LocalDate.of(2026, 8, 1);
+            when(affiliateRepository.findById(PRIMARY_ID))
+                    .thenReturn(Optional.of(activePrimary()));
+            when(payslipRepository.findTopByPrimaryAffiliate_IdOrderByPeriodDesc(PRIMARY_ID))
+                    .thenReturn(Optional.of(Payslip.builder().period(period).build()));
+
+            // When / Then
+            assertThat(affiliateService.getById(PRIMARY_ID).getPeriodLastPayslip())
+                    .isEqualTo(period);
+        }
+
+        @Test
+        @DisplayName("Un familiar informa el recibo de su titular, no uno propio")
+        void shouldUsePrimaryPayslip_whenAffiliateIsDependent() {
+            // Given
+            LocalDate period = LocalDate.of(2026, 8, 1);
+            Affiliate dependent = dependentOf(DEPENDENT_ID, Status.ACTIVE, activePrimary());
+            when(affiliateRepository.findById(DEPENDENT_ID))
+                    .thenReturn(Optional.of(dependent));
+            when(payslipRepository.findTopByPrimaryAffiliate_IdOrderByPeriodDesc(PRIMARY_ID))
+                    .thenReturn(Optional.of(Payslip.builder().period(period).build()));
+
+            // When / Then
+            assertThat(affiliateService.getById(DEPENDENT_ID).getPeriodLastPayslip())
+                    .isEqualTo(period);
         }
     }
 
