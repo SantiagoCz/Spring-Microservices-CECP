@@ -34,5 +34,5 @@ public class Payslip {
     @Column(nullable = false)
     private LocalDateTime uploadDate;
 
-    // TODO: Auditoría
+    // Sin auditoría: el recibo es una copia de consulta para administración
 }
