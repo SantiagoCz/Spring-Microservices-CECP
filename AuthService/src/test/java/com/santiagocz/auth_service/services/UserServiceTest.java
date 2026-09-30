@@ -7,16 +7,14 @@ import com.santiagocz.auth_service.domain.enums.HierarchyRole;
 import com.santiagocz.auth_service.dto.request.PersonRequest;
 import com.santiagocz.auth_service.dto.request.RegisterRequest;
 import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
+import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.exceptions.*;
 import com.santiagocz.auth_service.repositories.PersonRepository;
 import com.santiagocz.auth_service.repositories.SubRoleRepository;
 import com.santiagocz.auth_service.repositories.UserRepository;
 import com.santiagocz.common.delegation.Delegation;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -65,6 +63,7 @@ class UserServiceTest {
 
     private static final String DEFAULT_USERNAME = "12345678";
     private static final String DEFAULT_DNI = "12345678";
+    private static final String OTHER_DNI = "87654321";
     private static final String DEFAULT_PASSWORD = "1234";
     private static final String DEFAULT_SUBROLE = "RRHH_ADMIN";
     private static final Delegation DEFAULT_DELEGATION = Delegation.ALEM;
@@ -578,7 +577,7 @@ class UserServiceTest {
         }
     }
 
-// ──────────── GET BY USERNAME ────────────
+    // ──────────── GET BY USERNAME ────────────
 
     @Nested
     @DisplayName("getUserByUsername")
@@ -610,7 +609,7 @@ class UserServiceTest {
         }
     }
 
-// ──────────── GET PERSON BY USERNAME ────────────
+    // ──────────── GET PERSON BY USERNAME ────────────
 
     @Nested
     @DisplayName("getPersonByUsername")
@@ -639,6 +638,230 @@ class UserServiceTest {
 
             // Then
             assertThat(result.getDni()).isEqualTo(DEFAULT_DNI);
+        }
+    }
+
+    // ──────────── UPDATE MY PERSON ────────────
+
+    @Nested
+    @DisplayName("updateMyPerson")
+    class UpdateMyPerson {
+
+        @Test
+        @DisplayName("Actualiza los datos personales del usuario autenticado")
+        void shouldUpdateOwnPersonalData() {
+            // Given
+            User user = userCreatedBy(ADMIN_ID);
+            authenticateAs(user);
+            when(userRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(user));
+            when(userRepository.existsByUsername(OTHER_DNI))
+                    .thenReturn(false);
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+            dto.setFirstName("Carlos");
+            dto.setLastName("Fernández");
+            dto.setPhoneNumber("3764123456");
+            dto.setBirthDate(LocalDate.of(1991, 2, 2));
+
+            // When
+            UserResponse response = userService.updateMyPerson(dto);
+
+            // Then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getUsername()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getDni()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getFirstName()).isEqualTo("Carlos");
+                softly.assertThat(response.getPerson().getLastName()).isEqualTo("Fernández");
+                softly.assertThat(response.getPerson().getPhoneNumber()).isEqualTo("3764123456");
+                softly.assertThat(response.getPerson().getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
+            });
+        }
+
+        @Test
+        @DisplayName("No verifica duplicados si el DNI no cambia")
+        void shouldNotCheckDuplicates_whenDniIsUnchanged() {
+            // Given
+            User user = userCreatedBy(ADMIN_ID);
+            authenticateAs(user);
+            when(userRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(user));
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(DEFAULT_DNI);
+            dto.setFirstName("Carlos");
+            dto.setLastName("Fernández");
+            dto.setPhoneNumber("3764123456");
+            dto.setBirthDate(LocalDate.of(1991, 2, 2));
+
+            // When
+            UserResponse response = userService.updateMyPerson(dto);
+
+            // Then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getUsername()).isEqualTo(DEFAULT_DNI);
+                softly.assertThat(response.getPerson().getDni()).isEqualTo(DEFAULT_DNI);
+                softly.assertThat(response.getPerson().getFirstName()).isEqualTo("Carlos");
+                softly.assertThat(response.getPerson().getLastName()).isEqualTo("Fernández");
+                softly.assertThat(response.getPerson().getPhoneNumber()).isEqualTo("3764123456");
+                softly.assertThat(response.getPerson().getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
+            });
+
+            verify(userRepository, never()).existsByUsername(any());
+        }
+
+        @Test
+        @DisplayName("Falla si el nuevo DNI ya pertenece a otro usuario")
+        void shouldThrowAlreadyExists_whenNewDniIsTaken() {
+            // Given
+            User user = userCreatedBy(ADMIN_ID);
+            authenticateAs(user);
+            when(userRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(user));
+            when(userRepository.existsByUsername(OTHER_DNI))
+                    .thenReturn(true);
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+
+            // When / Then
+            assertThatThrownBy(() -> userService.updateMyPerson(dto))
+                    .isInstanceOf(UserAlreadyExistsException.class);
+        }
+
+        @Test
+        @DisplayName("Falla si el nuevo DNI pertenece a un usuario eliminado")
+        void shouldThrowAlreadyExists_whenNewDniBelongsToDeletedUser() {
+            // Given
+            // username está libre porque @Where esconde al usuario borrado,
+            User user = userCreatedBy(ADMIN_ID);
+            authenticateAs(user);
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+            when(userRepository.existsByUsername(OTHER_DNI)).thenReturn(false);
+            when(personRepository.existsByDni(OTHER_DNI)).thenReturn(true);
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+
+            // When / Then
+            assertThatThrownBy(() -> userService.updateMyPerson(dto))
+                    .isInstanceOf(UserAlreadyExistsException.class);
+        }
+    }
+
+    // ──────────── UPDATE USER PERSON ────────────
+
+    @Nested
+    @DisplayName("updateUserPerson")
+    class UpdateUserPerson {
+
+        @Test
+        @DisplayName("Falla si el usuario no existe")
+        void shouldThrowNotFound_whenUserDoesNotExist() {
+            // Given
+            authenticateAs(firstLevelAdmin());
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+            // When / Then
+            assertThatThrownBy(() -> userService.updateUserPerson(USER_ID, defaultPersonRequest()))
+                    .isInstanceOf(UserNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Falla si no tiene permisos sobre el usuario")
+        void shouldThrowAccessDenied_whenCallerCannotManageUser() {
+            // Given
+            authenticateAs(firstLevelAdmin());
+            when(userRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(userCreatedBy(OTHER_ADMIN_ID)));
+            // El creador es un admin de otra rama
+            when(userRepository.findByIdIncludingDeleted(OTHER_ADMIN_ID))
+                    .thenReturn(Optional.of(userOf(OTHER_ADMIN_ID, HierarchyRole.ADMIN, SUPER_ADMIN_ID)));
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+            dto.setFirstName("Carlos");
+            dto.setLastName("Fernández");
+            dto.setPhoneNumber("3764123456");
+            dto.setBirthDate(LocalDate.of(1991, 2, 2));
+
+            // When / Then
+            assertThatThrownBy(() -> userService.updateUserPerson(USER_ID, dto))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Un admin no puede modificar los datos de un superadmin")
+        void shouldThrowAccessDenied_whenAdminTargetsSuperAdmin() {
+            // Given
+            authenticateAs(firstLevelAdmin());
+            when(userRepository.findById(SUPER_ADMIN_ID))
+                    .thenReturn(Optional.of(superAdmin()));
+
+            // When / Then
+            assertThatThrownBy(() -> userService.updateUserPerson(SUPER_ADMIN_ID, defaultPersonRequest()))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Un admin puede modificar los datos de un usuario que creó")
+        void shouldUpdatePersonalData_whenAdminManagesUser() {
+            // Given
+            authenticateAs(firstLevelAdmin());
+            User user = userCreatedBy(ADMIN_ID);
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+            dto.setFirstName("Carlos");
+            dto.setLastName("Fernández");
+            dto.setPhoneNumber("3764123456");
+            dto.setBirthDate(LocalDate.of(1991, 2, 2));
+
+            // When
+            UserResponse response = userService.updateUserPerson(USER_ID, dto);
+
+            // Then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getUsername()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getDni()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getFirstName()).isEqualTo("Carlos");
+                softly.assertThat(response.getPerson().getLastName()).isEqualTo("Fernández");
+                softly.assertThat(response.getPerson().getPhoneNumber()).isEqualTo("3764123456");
+                softly.assertThat(response.getPerson().getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
+            });
+            assertThat(user.getUpdatedBy()).isEqualTo(ADMIN_ID);
+        }
+
+        @Test
+        @DisplayName("Un superadmin puede modificar los datos de cualquier usuario")
+        void shouldUpdatePersonalData_forSuperAdmin() {
+            // Given
+            authenticateAs(superAdmin());
+            User user = userCreatedBy(ADMIN_ID);
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+            PersonRequest dto = new PersonRequest();
+            dto.setDni(OTHER_DNI);
+            dto.setFirstName("Carlos");
+            dto.setLastName("Fernández");
+            dto.setPhoneNumber("3764123456");
+            dto.setBirthDate(LocalDate.of(1991, 2, 2));
+
+            // When
+            UserResponse response = userService.updateUserPerson(USER_ID, dto);
+
+            // Then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getUsername()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getDni()).isEqualTo(OTHER_DNI);
+                softly.assertThat(response.getPerson().getFirstName()).isEqualTo("Carlos");
+                softly.assertThat(response.getPerson().getLastName()).isEqualTo("Fernández");
+                softly.assertThat(response.getPerson().getPhoneNumber()).isEqualTo("3764123456");
+                softly.assertThat(response.getPerson().getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
+            });
+            assertThat(user.getUpdatedBy()).isEqualTo(SUPER_ADMIN_ID);
         }
     }
 
@@ -701,7 +924,7 @@ class UserServiceTest {
         }
     }
 
-// ──────────── RESET USER PASSWORD ────────────
+    // ──────────── RESET USER PASSWORD ────────────
 
     @Nested
     @DisplayName("resetUserPassword")

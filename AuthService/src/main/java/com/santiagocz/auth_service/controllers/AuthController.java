@@ -1,9 +1,6 @@
 package com.santiagocz.auth_service.controllers;
 
-import com.santiagocz.auth_service.dto.request.LoginRequest;
-import com.santiagocz.auth_service.dto.request.RegisterRequest;
-import com.santiagocz.auth_service.dto.request.ResetPasswordRequest;
-import com.santiagocz.auth_service.dto.request.UpdatePasswordRequest;
+import com.santiagocz.auth_service.dto.request.*;
 import com.santiagocz.auth_service.dto.response.ApiResponse;
 import com.santiagocz.auth_service.dto.response.UserResponse;
 import com.santiagocz.auth_service.services.AuthService;
@@ -72,6 +69,23 @@ public class AuthController {
 
     // ──────────── UPDATE - PASSWORD - SUBROLES ────────────
 
+    @PutMapping("/me/person")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse> updateMyPerson(
+            @Valid @RequestBody PersonRequest request) {
+        UserResponse response = userService.updateMyPerson(request);
+        return ResponseEntity.ok(new ApiResponse(200, "Usuario actualizado correctamente", response));
+    }
+
+    @PutMapping("/{userId}/person")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> updateUserPerson(
+            @PathVariable Long userId,
+            @Valid @RequestBody PersonRequest request) {
+       UserResponse response = userService.updateUserPerson(userId, request);
+        return ResponseEntity.ok(new ApiResponse(200, "Usuario actualizado correctamente", response));
+    }
+
     @PatchMapping("/me/password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse> updateMyPassword(@Valid @RequestBody UpdatePasswordRequest request) {
@@ -88,7 +102,7 @@ public class AuthController {
     }
 
     @PostMapping("/{userId}/subroles/{subrolName}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")  // Por ahora solo SUPER_ADMIN (después se complica para ADMIN)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse> addSubrol(
             @PathVariable Long userId,
             @PathVariable String subrolName) {

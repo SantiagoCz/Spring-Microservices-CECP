@@ -1,5 +1,6 @@
 package com.santiagocz.auth_service.services;
 
+import com.santiagocz.auth_service.dto.request.PersonRequest;
 import com.santiagocz.auth_service.exceptions.*;
 import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.auth_service.domain.entities.Person;
@@ -106,9 +107,28 @@ public class UserService {
         return buildPersonResponse(getUserByUsername(username).getPerson());
     }
 
-    // ──────────── UPDATE — PASSWORD ────────────
+    // ──────────── UPDATE — PERSON ────────────
 
-    //TODO: faltan métodos de actualización de atributos de persona.
+    @Transactional
+    public UserResponse updateMyPerson(PersonRequest request) {
+        User authenticatedUser = getAuthenticatedUserManaged();
+        applyPersonChanges(authenticatedUser, request);
+        return buildUserResponse(authenticatedUser);
+    }
+
+    @Transactional
+    public UserResponse updateUserPerson(Long userId, PersonRequest request) {
+        User authenticatedUser = getAuthenticatedPrincipal();
+        User currentUser = findUserById(userId);
+
+        if (!canManage(authenticatedUser, currentUser)) {
+            throw new AccessDeniedException("No tiene permisos para modificar los datos de este usuario");
+        }
+        applyPersonChanges(currentUser, request);
+        return buildUserResponse(currentUser);
+    }
+
+    // ──────────── UPDATE — PASSWORD ────────────
 
     @Transactional
     public void updateMyPassword(UpdatePasswordRequest request) {
@@ -326,6 +346,23 @@ public class UserService {
     private SubRole getSubRoleByName(String subrolName) {
         return subRoleRepository.findByName(subrolName)
                 .orElseThrow(() -> new SubRoleNotFoundException("Subrol no encontrado: " + subrolName));
+    }
+
+    private void applyPersonChanges(User user, PersonRequest request) {
+        Person person = user.getPerson();
+
+        if (!person.getDni().equals(request.getDni())) {
+            validateDniNotInUse(request.getDni());
+            person.setDni(request.getDni());
+            user.setUsername(request.getDni());
+        }
+
+        person.setFirstName(request.getFirstName());
+        person.setLastName(request.getLastName());
+        person.setPhoneNumber(request.getPhoneNumber());
+        person.setBirthDate(request.getBirthDate());
+
+        setUpdaterUser(user);
     }
 
     // ──────────── AUTHENTICATED USER ────────────
