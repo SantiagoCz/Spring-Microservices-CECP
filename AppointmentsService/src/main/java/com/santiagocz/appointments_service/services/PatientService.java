@@ -7,6 +7,7 @@ import com.santiagocz.appointments_service.dto.patient.PatientResponseDto;
 import com.santiagocz.appointments_service.repositories.PatientRepository;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
+import com.santiagocz.common.text.TextFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,8 +75,8 @@ public class PatientService {
         }
 
         patient.setDni(dto.getDni());
-        patient.setFirstName(formatWords(dto.getFirstName()));
-        patient.setLastName(formatWords(dto.getLastName()));
+        patient.setFirstName(TextFormatter.capitalizeWords(dto.getFirstName()));
+        patient.setLastName(TextFormatter.capitalizeWords(dto.getLastName()));
         patient.setPhoneNumber(dto.getPhoneNumber());
         patient.setBirthDate(dto.getBirthDate());
 
@@ -117,30 +118,6 @@ public class PatientService {
         }
     }
 
-    private String formatWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return text;
-        }
-
-        String[] words = text.trim().split("\\s+");
-
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
-        }
-
-        return result.toString();
-    }
-
     // Mappers
     private PatientResponseDto buildResponseDto(Patient patient) {
         return buildResponseDto(patient, null);
@@ -162,8 +139,8 @@ public class PatientService {
     private Patient buildEntity(PatientRequestDto dto) {
         return Patient.builder()
                 .dni(dto.getDni())
-                .firstName(formatWords(dto.getFirstName()))
-                .lastName(formatWords(dto.getLastName()))
+                .firstName(TextFormatter.capitalizeWords(dto.getFirstName()))
+                .lastName(TextFormatter.capitalizeWords(dto.getLastName()))
                 .phoneNumber(dto.getPhoneNumber())
                 .birthDate(dto.getBirthDate())
                 .build();

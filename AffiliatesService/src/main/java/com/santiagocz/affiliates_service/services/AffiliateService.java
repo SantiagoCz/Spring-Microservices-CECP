@@ -11,6 +11,7 @@ import com.santiagocz.affiliates_service.repositories.AffiliateRepository;
 import com.santiagocz.affiliates_service.repositories.PayslipRepository;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
+import com.santiagocz.common.text.TextFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +41,8 @@ public class AffiliateService {
 
         Affiliate primary = Affiliate.builder()
                 .dni(dto.getDni())
-                .firstName(formatWords(dto.getFirstName()))
-                .lastName(formatWords(dto.getLastName()))
+                .firstName(TextFormatter.capitalizeWords(dto.getFirstName()))
+                .lastName(TextFormatter.capitalizeWords(dto.getLastName()))
                 .phoneNumber(dto.getPhoneNumber())
                 .birthDate(dto.getBirthDate())
                 .status(Status.ACTIVE)
@@ -68,8 +69,8 @@ public class AffiliateService {
 
         Affiliate dependent = Affiliate.builder()
                 .dni(dto.getDni())
-                .firstName(formatWords(dto.getFirstName()))
-                .lastName(formatWords(dto.getLastName()))
+                .firstName(TextFormatter.capitalizeWords(dto.getFirstName()))
+                .lastName(TextFormatter.capitalizeWords(dto.getLastName()))
                 .phoneNumber(phone)
                 .birthDate(dto.getBirthDate())
                 .status(Status.ACTIVE)
@@ -175,8 +176,8 @@ public class AffiliateService {
         }
 
         affiliate.setDni(dto.getDni());
-        affiliate.setFirstName(formatWords(dto.getFirstName()));
-        affiliate.setLastName(formatWords(dto.getLastName()));
+        affiliate.setFirstName(TextFormatter.capitalizeWords(dto.getFirstName()));
+        affiliate.setLastName(TextFormatter.capitalizeWords(dto.getLastName()));
         affiliate.setPhoneNumber(dto.getPhoneNumber());
         affiliate.setBirthDate(dto.getBirthDate());
 
@@ -265,29 +266,4 @@ public class AffiliateService {
                 ? affiliate.getId()
                 : affiliate.getPrimaryAffiliate().getId();
     }
-
-    private String formatWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return text;
-        }
-
-        String[] words = text.trim().split("\\s+");
-
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
-        }
-
-        return result.toString();
-    }
-
 }

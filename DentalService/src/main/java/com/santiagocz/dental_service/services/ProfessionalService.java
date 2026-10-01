@@ -1,6 +1,7 @@
 package com.santiagocz.dental_service.services;
 
 import com.santiagocz.common.exceptions.EntityNotFoundException;
+import com.santiagocz.common.text.TextFormatter;
 import com.santiagocz.dental_service.domain.entities.PriceList;
 import com.santiagocz.dental_service.domain.entities.Professional;
 import com.santiagocz.dental_service.dto.priceList.PriceListResponseDto;
@@ -26,7 +27,7 @@ public class ProfessionalService {
     public ProfessionalResponseDto create(ProfessionalRequestDto dto) {
         PriceList priceList = priceListService.getEntityById(dto.priceListId());
         Professional professional = new Professional();
-        professional.setName(formatWords(dto.firstName()) + " " + formatWords(dto.lastName()));
+        professional.setName(TextFormatter.capitalizeWords(dto.firstName()) + " " + TextFormatter.capitalizeWords(dto.lastName()));
         professional.setPriceList(priceList);
         return toResponse(professionalRepository.save(professional));
     }
@@ -51,7 +52,7 @@ public class ProfessionalService {
     public ProfessionalResponseDto update(Long id, ProfessionalRequestDto dto) {
         Professional professional = getEntityById(id);
         PriceList priceList = priceListService.getEntityById(dto.priceListId());
-        professional.setName(formatWords(dto.firstName()) + " " + formatWords(dto.lastName()));
+        professional.setName(TextFormatter.capitalizeWords(dto.firstName()) + " " + TextFormatter.capitalizeWords(dto.lastName()));
         professional.setPriceList(priceList);
         return toResponse(professional);
     }
@@ -79,29 +80,4 @@ public class ProfessionalService {
                 new PriceListResponseDto(professional.getPriceList().getId(), professional.getPriceList().getName())
         );
     }
-
-    private String formatWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return text;
-        }
-
-        String[] words = text.trim().split("\\s+");
-
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
-        }
-
-        return result.toString();
-    }
-
 }

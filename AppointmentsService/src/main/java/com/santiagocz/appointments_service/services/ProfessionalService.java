@@ -8,6 +8,7 @@ import com.santiagocz.appointments_service.dto.professional.ProfessionalResponse
 import com.santiagocz.appointments_service.repositories.ProfessionalRepository;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
+import com.santiagocz.common.text.TextFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -80,8 +81,8 @@ public class ProfessionalService {
         }
 
         professional.setDni(dto.getDni());
-        professional.setFirstName(formatWords(dto.getFirstName()));
-        professional.setLastName(formatWords(dto.getLastName()));
+        professional.setFirstName(TextFormatter.capitalizeWords(dto.getFirstName()));
+        professional.setLastName(TextFormatter.capitalizeWords(dto.getLastName()));
         professional.setPhoneNumber(dto.getPhoneNumber());
         professional.setBirthDate(dto.getBirthDate());
         professional.setLicenseNumber(dto.getLicenseNumber());
@@ -132,30 +133,6 @@ public class ProfessionalService {
         }
     }
 
-    private String formatWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return text;
-        }
-
-        String[] words = text.trim().split("\\s+");
-
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
-        }
-
-        return result.toString();
-    }
-
     // Mappers
     private ProfessionalResponseDto buildResponseDto(Professional professional) {
         return ProfessionalResponseDto.builder()
@@ -175,8 +152,8 @@ public class ProfessionalService {
         return Professional.builder()
                 .dni(dto.getDni())
                 .licenseNumber((dto.getLicenseNumber()))
-                .firstName(formatWords(dto.getFirstName()))
-                .lastName(formatWords(dto.getLastName()))
+                .firstName(TextFormatter.capitalizeWords(dto.getFirstName()))
+                .lastName(TextFormatter.capitalizeWords(dto.getLastName()))
                 .phoneNumber(dto.getPhoneNumber())
                 .birthDate(dto.getBirthDate())
                 .specialty(dto.getSpecialty())

@@ -2,6 +2,7 @@ package com.santiagocz.employees_service.services;
 
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
+import com.santiagocz.common.text.TextFormatter;
 import com.santiagocz.employees_service.domain.entities.Employee;
 import com.santiagocz.employees_service.domain.enums.EmployeeRole;
 import com.santiagocz.employees_service.domain.enums.EmployeeStatus;
@@ -78,8 +79,8 @@ public class EmployeeService {
         }
 
         employee.setDni(dto.getDni());
-        employee.setFirstName(formatWords(dto.getFirstName()));
-        employee.setLastName(formatWords(dto.getLastName()));
+        employee.setFirstName(TextFormatter.capitalizeWords(dto.getFirstName()));
+        employee.setLastName(TextFormatter.capitalizeWords(dto.getLastName()));
         employee.setPhone(dto.getPhone());
         employee.setBirthDate(dto.getBirthDate());
         employee.setDelegation(dto.getDelegation());
@@ -146,28 +147,6 @@ public class EmployeeService {
         }
     }
 
-    private String formatWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return text;
-        }
-        String[] words = text.trim().split("\\s+");
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
-        }
-
-        return result.toString();
-    }
-
     // Mappers
     private EmployeeResponseDto buildResponseDto(Employee employee) {
         return EmployeeResponseDto.builder()
@@ -186,8 +165,8 @@ public class EmployeeService {
     private Employee buildEmployee(EmployeeRequestDto dto) {
         return Employee.builder()
                 .dni(dto.getDni())
-                .firstName(formatWords(dto.getFirstName()))
-                .lastName(formatWords(dto.getLastName()))
+                .firstName(TextFormatter.capitalizeWords(dto.getFirstName()))
+                .lastName(TextFormatter.capitalizeWords(dto.getLastName()))
                 .phone(dto.getPhone())
                 .birthDate(dto.getBirthDate())
                 .delegation(dto.getDelegation())
