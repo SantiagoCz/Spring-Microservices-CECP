@@ -2,28 +2,27 @@ package com.santiagocz.common.text;
 
 public final class TextFormatter {
 
+    // Caracteres después de los cuales empieza una palabra nueva
+    private static final String SEPARATORS = " '-";
+
     private TextFormatter() {
     }
 
     public static String capitalizeWords(String text) {
-        if (text == null || text.trim().isEmpty()) {
+        if (text == null || text.isBlank()) {
             return text;
         }
 
-        String[] words = text.trim().split("\\s+");
+        String collapsed = text.trim().replaceAll("\\s+", " ");
 
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder(collapsed.length());
+        boolean startOfWord = true;
 
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                String formattedWord = word.substring(0, 1).toUpperCase() +
-                        word.substring(1).toLowerCase();
-
-                if (result.length() > 0) {
-                    result.append(" ");
-                }
-                result.append(formattedWord);
-            }
+        for (char current : collapsed.toCharArray()) {
+            result.append(startOfWord
+                    ? Character.toUpperCase(current)
+                    : Character.toLowerCase(current));
+            startOfWord = SEPARATORS.indexOf(current) >= 0;
         }
 
         return result.toString();
