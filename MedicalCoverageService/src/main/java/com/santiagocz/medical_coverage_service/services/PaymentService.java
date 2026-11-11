@@ -164,12 +164,6 @@ public class PaymentService {
         return new LocalDate[]{startOfMonth, endOfMonth};
     }
 
-    private void validateAffiliateIsActive(Long affiliateId) {
-        if (!Boolean.TRUE.equals(affiliateClient.isActive(affiliateId))) {
-            throw new EntityConflictException("El afiliado no existe o no está activo.");
-        }
-    }
-
     // ──────────── USER DELEGATION ────────────
 
     private Delegation userDelegation() {
@@ -206,6 +200,12 @@ public class PaymentService {
     }
 
     // ──────────── FEIGN TO AFFILIATES ────────────
+
+    private void validateAffiliateIsActive(Long affiliateId) {
+        if (!Boolean.TRUE.equals(affiliateClient.isActive(affiliateId))) {
+            throw new EntityConflictException("El afiliado no existe o no está activo.");
+        }
+    }
 
     private AffiliateSummaryDto lookupSingleAffiliate(Long affiliateId) {
         return affiliateClient.lookupByIds(List.of(affiliateId))
