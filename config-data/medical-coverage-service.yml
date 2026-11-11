@@ -15,6 +15,16 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    openfeign:
+      client:
+        config:
+          affiliate-service:
+            # Tiempo máximo para establecer la conexión con Affiliates.
+            connect-timeout: 500
+            # Tiempo máximo esperando la respuesta de Affiliates.
+            # Sin esto, una llamada colgada nunca cuenta como falla para el Circuit Breaker.
+            read-timeout: 1000
 
 eureka:
   client:
@@ -30,7 +40,29 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,circuitbreakers
   endpoint:
     health:
       show-details: when-authorized
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      affiliate-service:
+        # Cuenta las últimas N llamadas (no por tiempo).
+        sliding-window-type: count-based
+        # Cuántas llamadas se miden para calcular el porcentaje de fallas.
+        sliding-window-size: 10
+        # Mínimo de llamadas registradas antes de evaluar si abrir el circuito.
+        # Evita que una o dos fallas aisladas lo abran.
+        minimum-number-of-calls: 5
+        # Porcentaje de fallas (timeouts, errores HTTP, etc.) que abre el circuito.
+        failure-rate-threshold: 50
+        # Tiempo que el circuito permanece ABIERTO. Durante ese tiempo las llamadas
+        # fallan al instante, sin llegar a Affiliates.
+        wait-duration-in-open-state: 10s
+        # En HALF_OPEN deja pasar esta cantidad de llamadas de prueba.
+        # Si tienen éxito, el circuito se cierra. Si fallan, vuelve a ABIERTO.
+        permitted-number-of-calls-in-half-open-state: 2
+        # Registra el estado del circuito como indicador en /actuator/health.
+        register-health-indicator: true
