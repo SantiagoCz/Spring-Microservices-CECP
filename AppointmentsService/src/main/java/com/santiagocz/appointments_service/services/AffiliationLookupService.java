@@ -2,12 +2,14 @@ package com.santiagocz.appointments_service.services;
 
 import com.santiagocz.appointments_service.clients.AffiliateClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AffiliationLookupService {
@@ -27,8 +29,9 @@ public class AffiliationLookupService {
 
     private Optional<Set<String>> fetch(List<String> dnis) {
         try {
-            return Optional.of(affiliateClient.filterActiveDnis(dnis));
-        } catch (Exception ex) {
+            return Optional.ofNullable(affiliateClient.filterActiveDnis(dnis));
+        } catch (RuntimeException ex) {
+            log.warn("Servicio de Afiliados no disponible: {}", ex.getClass().getSimpleName());
             return Optional.empty();
         }
     }
