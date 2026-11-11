@@ -4,7 +4,7 @@ import com.santiagocz.common.context.CurrentUser;
 import com.santiagocz.common.delegation.Delegation;
 import com.santiagocz.common.exceptions.EntityConflictException;
 import com.santiagocz.common.exceptions.EntityNotFoundException;
-import com.santiagocz.medical_coverage_service.client.AffiliateClient;
+import com.santiagocz.medical_coverage_service.client.AffiliateGateway;
 import com.santiagocz.medical_coverage_service.domain.entities.MedicalOrder;
 import com.santiagocz.medical_coverage_service.domain.entities.Payment;
 import com.santiagocz.medical_coverage_service.domain.enums.Status;
@@ -31,7 +31,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final MedicalOrderService medicalOrderService;
-    private final AffiliateClient affiliateClient;
+    private final AffiliateGateway affiliateGateway;
 
     // ──────────── CREATE ────────────
 
@@ -202,13 +202,13 @@ public class PaymentService {
     // ──────────── FEIGN TO AFFILIATES ────────────
 
     private void validateAffiliateIsActive(Long affiliateId) {
-        if (!Boolean.TRUE.equals(affiliateClient.isActive(affiliateId))) {
+        if (!Boolean.TRUE.equals(affiliateGateway.isActive(affiliateId))) {
             throw new EntityConflictException("El afiliado no existe o no está activo.");
         }
     }
 
     private AffiliateSummaryDto lookupSingleAffiliate(Long affiliateId) {
-        return affiliateClient.lookupByIds(List.of(affiliateId))
+        return affiliateGateway.lookupByIds(List.of(affiliateId))
                 .stream()
                 .findFirst()
                 .orElse(null);
@@ -231,7 +231,7 @@ public class PaymentService {
             return Map.of();
         }
 
-        return affiliateClient.lookupByIds(affiliateIds)
+        return affiliateGateway.lookupByIds(affiliateIds)
                 .stream()
                 .collect(Collectors.toMap(AffiliateSummaryDto::getId, a -> a));
     }
